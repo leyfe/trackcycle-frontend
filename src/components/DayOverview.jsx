@@ -103,7 +103,7 @@ export default function DayOverview({ gaps, totalHours, onAddGapEntry }) {
                     –{" "}
                     {activeGap.to.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </div>
-
+                  
                   <Input
                     size="sm"
                     placeholder="Beschreibung"
