@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Höhere Dropdown-Liste für NextUI Autocomplete */
+.ac-popover > div[data-orientation="vertical"] {
+  max-height: 70vh !important;    /* statt 256px */
+  overflow-y: auto !important;
+}
+
+/* Optional: Scroll-Masken neutralisieren, falls sie stören */
+.ac-popover > div[data-orientation="vertical"][data-top-scroll="true"],
+.ac-popover > div[data-orientation="vertical"][data-bottom-scroll="true"],
+.ac-popover > div[data-orientation="vertical"][data-top-bottom-scroll="true"] {
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
