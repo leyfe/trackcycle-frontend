@@ -213,7 +213,7 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
                           className="absolute opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
                           onPress={() => handleRestart(list[list.length - 1])}
                         >
-                          <RotateCw className="w-4 h-4 text-indigo-400" />
+                          <RotateCw className={`w-4 h-4 text-${settings.accentColor}-400`} />
                         </Button>
                       </div>
                       <span className="text-sm text-slate-400 whitespace-nowrap">

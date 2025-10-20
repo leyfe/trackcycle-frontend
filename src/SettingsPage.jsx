@@ -150,7 +150,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
               isIconOnly
               size="sm"
               variant="light"
-              className="text-slate-400 hover:text-indigo-400"
+              className={`text-slate-400 hover:text-${settings.accentColor}-400`}
               onPress={() => setIsEditing((v) => !v)}
               aria-label="Anzeigetitel bearbeiten"
             >
@@ -235,8 +235,8 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
               isSelected={settings.roundToQuarter}
               classNames={{
                 wrapper: `
-                  data-[selected=true]:bg-${settings.accentColor}-600
-                  data-[selected=true]:hover:bg-${settings.accentColor}-500
+                  "group-data-[selected=true]:!bg-${settings.accentColor}-600 
+                  group-data-[selected=true]:hover:!bg-${settings.accentColor}-500",
                 `
               }}
               onValueChange={(val) => {
@@ -251,12 +251,12 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                   size="sm"
                   color={settings.accentColor || "primary"}
                   isSelected={settings.showFavorites}
-                  classNames={{
-                    wrapper: `
-                      data-[selected=true]:bg-${settings.accentColor}-600
-                      data-[selected=true]:hover:bg-${settings.accentColor}-500
-                    `
-                  }}
+                classNames={{
+                  wrapper: `
+                    "group-data-[selected=true]:!bg-${settings.accentColor}-600 
+                    group-data-[selected=true]:hover:!bg-${settings.accentColor}-500",
+                  `
+                }}
                   onValueChange={() => {
                     toggleSetting("showFavorites");
                     showToast("Einstellung gespeichert", "OK", null, 3000, "success");
@@ -285,7 +285,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                   size="xs"
                   variant={selected ? "solid" : "flat"}
                   color={selected ? "indigo" : "default"}
-                  className={`text-xs min-w-10 min-h-8 h-8 ${selected ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-300"}`}
+                  className={`text-xs min-w-10 min-h-8 h-8 ${selected ? `bg-${settings.accentColor}-600  text-white` : "bg-slate-800 text-slate-300"}`}
                   onPress={() =>
                     setSettings((prev) => {
                       const workdays = new Set(prev.workdays || []);
@@ -365,7 +365,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                           <div className="text-xs text-slate-400">{t.projectName}</div>
                         </div>
                         <button
-                          className="text-xs text-indigo-400 hover:text-indigo-300"
+                          className={`text-xs text-${settings.accentColor}-400 hover:text-${settings.accentColor}-300`}
                           onClick={() =>
                             setSettings((prev) => ({
                               ...prev,

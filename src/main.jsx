@@ -8,6 +8,15 @@ import { ToastProvider } from "./components/Toast";
 import App from "./App.jsx";
 import "./index.css";
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then(() => console.log("✅ Service Worker registriert"))
+      .catch((err) => console.error("❌ SW-Fehler", err));
+  });
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
 

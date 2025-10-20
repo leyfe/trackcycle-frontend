@@ -1,7 +1,7 @@
 import React from "react";
 import { Home, BarChart2, Settings } from "lucide-react";
 
-export default function BottomNav({ activeTab, onChange }) {
+export default function BottomNav({ activeTab, onChange, settings }) {
   const buttons = [
     { key: "home", icon: Home, label: "Tracking" },
     { key: "stats", icon: BarChart2, label: "Statistiken" },
@@ -21,13 +21,13 @@ export default function BottomNav({ activeTab, onChange }) {
             <div className="flex items-center justify-center h-6">
               <Icon
                 className={`w-[22px] h-[22px] transition-colors duration-200 ${
-                  isActive ? "text-indigo-400" : "text-slate-400"
+                  isActive ? `text-${settings.accentColor}-400` : "text-slate-400"
                 }`}
               />
             </div>
             <span
               className={`text-[11px] leading-none font-medium ${
-                isActive ? "text-indigo-400" : "text-slate-500"
+                isActive ? `text-${settings.accentColor}-400` : "text-slate-500"
               }`}
             >
               {label}

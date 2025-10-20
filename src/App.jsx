@@ -159,6 +159,7 @@ export default function App() {
               setActiveEntry={setActiveEntry}
               suggestions={suggestions}
               entries={entries}
+              settings={settings}
             />
 
             {/* ⭐ Favoritenleiste */}
@@ -218,7 +219,8 @@ export default function App() {
       />
 
       {/* 🔻 Bottom Navigation */}
-      <BottomNav activeTab={activeTab} onChange={setActiveTab} />
+      <BottomNav activeTab={activeTab} onChange={setActiveTab} settings={settings}
+ />
     </div>
   );
 }
