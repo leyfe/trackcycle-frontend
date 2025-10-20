@@ -6,10 +6,18 @@ self.addEventListener("install", (e) => {
   );
 });
 
-self.addEventListener("fetch", (e) => {
-  e.respondWith(
-    caches.match(e.request).then((resp) => {
-      return resp || fetch(e.request);
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  // Nur echte HTTP/HTTPS-Requests behandeln
+  if (!req.url.startsWith("http")) return;
+
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      return (
+        cached ||
+        fetch(req).catch(() => caches.match("/index.html")) // Fallback offline
+      );
     })
   );
 });
