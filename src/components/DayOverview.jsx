@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import { Button, Input, Select, SelectItem, Card, CardBody } from "@nextui-org/react";
 import { ProjectContext } from "../context/ProjectContext"; // falls du den Context nutzt
 
-export default function DayOverview({ gaps, totalHours, onAddGapEntry }) {
+export default function DayOverview({ gaps, totalHours, onAddGapEntry, onConvertToPause }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeGap, setActiveGap] = useState(null);
   const [description, setDescription] = useState("");
@@ -80,15 +80,23 @@ export default function DayOverview({ gaps, totalHours, onAddGapEntry }) {
                 <div
                   key={i}
                   onClick={() => setActiveGap(g)}
-                  className={`flex justify-between border-b border-slate-700/50 last:border-0 pb-1 cursor-pointer hover:bg-slate-700/30 rounded px-2 ${
+                  className={`flex items-center justify-between border-b border-slate-700/50 last:border-0 pb-1 cursor-pointer hover:bg-slate-700/30 rounded px-2 ${
                     activeGap === g ? "bg-slate-700/50" : ""
                   }`}
                 >
-                  <span>
+                  <span className="flex-1">
                     {g.from.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} –{" "}
                     {g.to.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
+                  <Button
+                    size="sm"
+                    variant="text"
+                    onPress={() => onConvertToPause(g)}
+                  >
+                    Als Pause deklarieren
+                  </Button>
                   <span className="text-slate-400">({g.text})</span>
+
                 </div>
               ))}
             </div>
@@ -160,7 +168,7 @@ export default function DayOverview({ gaps, totalHours, onAddGapEntry }) {
               gaps.length > 0 ? "mt-3 border-t border-slate-700/50 pt-2" : ""
             }`}
           >
-            <div className="font-medium text-amber-400">⚠️ Arbeitstag unvollständig</div>
+            <div className="font-medium text-amber-400">Arbeitstag unvollständig</div>
             <div className="text-sm text-slate-400">
               Nur {th}:{tm.toString().padStart(2, "0")} h erfasst (
               {rh}:{rm.toString().padStart(2, "0")} h fehlen bis 8 h)

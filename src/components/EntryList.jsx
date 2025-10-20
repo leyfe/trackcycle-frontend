@@ -6,7 +6,7 @@ import DayOverview from "./DayOverview";
 
 
 /* ----------------------------- EntryList ----------------------------- */
-export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRestart, onAdd, settings }) {
+export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRestart, onAdd, settings, onConvertToPause }) {
   const [collapsedTasks, setCollapsedTasks] = useState({});
   const [visibleDays, setVisibleDays] = useState(7);
   const [hasMore, setHasMore] = useState(false);
@@ -166,6 +166,7 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
               gaps={gaps}
               totalHours={dayRoundedTotal}
               onAddGapEntry={(entry) => onAdd(entry)}
+              onConvertToPause={onConvertToPause}
             />
           
             {Object.entries(grouped).map(([key, list]) => {
@@ -180,46 +181,73 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
               const toggle = () =>
                 setCollapsedTasks((prev) => ({ ...prev, [key]: !prev[key] }));
 
+              const isPauseGroup =
+                projectName?.toLowerCase() === "pause" ||
+                list[0]?.projectId === "PAUSE";
+
               return (
                 <div
                   key={key}
-                  className="group bg-slate-900/70 rounded-xl p-4 mb-3 border border-slate-800 transition-all duration-300 relative"
+                  className={`group rounded-xl p-4 mb-3 border transition-all duration-300 relative ${
+                    isPauseGroup
+                      ? "bg-slate-600/30 border-slate-600/40 text-amber-200"
+                      : "bg-slate-900/70 border-slate-800 text-slate-100"
+                  }`}
                 >
                   <div
                     className="flex justify-between items-start cursor-pointer select-none"
                     onClick={toggle}
                   >
                     <div className="flex items-start gap-2 min-w-0 flex-1">
-                      <div className="w-6 h-6 flex items-center justify-center rounded-md bg-slate-800 text-slate-400 text-xs">
+                      <div
+                        className={`w-6 h-6 flex items-center justify-center rounded-md text-xs ${
+                          isPauseGroup
+                            ? "bg-slate-800/60 text-slate-300"
+                            : "bg-slate-800 text-slate-400"
+                        }`}
+                      >
                         {list.length}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-white leading-snug">
-                          {description}
+                        <div
+                          className={`font-semibold leading-snug ${
+                            isPauseGroup ? "text-slate-400" : "text-white"
+                          }`}
+                        >
+                          {isPauseGroup ? "☕ Pause" : description}
                         </div>
-                        <div className="text-sm text-slate-400">{projectName}</div>
+                        <div
+                          className={`text-sm ${
+                            isPauseGroup ? "text-slate-500/80" : "text-slate-400"
+                          }`}
+                        >
+                          {isPauseGroup ? fmtDurationReadable(totalDuration) : projectName}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="relative w-6 h-6 flex items-center justify-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          className="absolute opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-                          onPress={() => handleRestart(list[list.length - 1])}
+                    {/* 🔸 Nur wenn kein Pause-Block */}
+                    {!isPauseGroup && (
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="relative w-6 h-6 flex items-center justify-center"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <RotateCw className={`w-4 h-4 text-${settings.accentColor}-400`} />
-                        </Button>
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            className="absolute opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                            onPress={() => handleRestart(list[list.length - 1])}
+                          >
+                            <RotateCw className={`w-4 h-4 text-${settings.accentColor}-400`} />
+                          </Button>
+                        </div>
+                        <span className="text-sm text-slate-400 whitespace-nowrap">
+                          {fmtDuration(totalDuration)} h
+                        </span>
                       </div>
-                      <span className="text-sm text-slate-400 whitespace-nowrap">
-                        {fmtDuration(totalDuration)} h
-                      </span>
-                    </div>
+                    )}
                   </div>
 
                   {!collapsed && (

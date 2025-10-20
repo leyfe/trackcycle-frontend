@@ -343,7 +343,7 @@ export default function TimeEntryForm({
       {/* ▶️ Start / ⏹ Stop */}
       {!activeEntry ? (
         <Button
-          className={`bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500 text-white text-lg py-6 rounded-2xl shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] transition-all duration-300 font-medium tracking-wide`}
+          className={`shadow-2xl bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500 text-white text-lg py-6 rounded-2xl shadow-${settings.accentColor}-500/40 hover:shadow-${settings.accentColor}-600/40 transition-all duration-300 font-medium tracking-wide`}
           size="lg"
           fullWidth
           onPress={startTimer}

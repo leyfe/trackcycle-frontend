@@ -53,6 +53,28 @@ export default function App() {
     [entries]
   );
 
+  const handleConvertToPause = (gap) => {
+    if (!gap) return;
+
+    const pauseEntry = {
+      id: Date.now(),
+      projectId: "PAUSE",
+      projectName: "Pause",
+      description: "Pause",
+      start: gap.from.toISOString(),
+      end: gap.to.toISOString(),
+      duration: ((gap.to - gap.from) / 3600000).toFixed(2),
+    };
+
+    setEntries((prev) => {
+      const updated = [...prev, pauseEntry];
+      return updated.sort((a, b) => new Date(a.start) - new Date(b.start));
+    });
+
+    localStorage.setItem("timetracko.entries", JSON.stringify(entries));
+    showToast("☕ Pause hinzugefügt", "OK", null, 3000, "success");
+  };
+
   const handleAdd = (newEntry) => {
     setEntries((prev) => {
       const updated = [...prev, newEntry];
@@ -187,7 +209,8 @@ export default function App() {
               settings={settings}
               onDelete={handleDeleteEntry}
               onRestart={handleRestart}
-              onAdd={handleAdd}     // 👈 hier sicherstellen, dass das existiert!
+              onAdd={handleAdd}  
+              onConvertToPause={handleConvertToPause}
             />
           </>
         )}

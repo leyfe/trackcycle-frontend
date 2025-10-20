@@ -42,6 +42,19 @@ export function ProjectProvider({ children }) {
     localStorage.setItem("timetracko.projects", JSON.stringify(unique));
   }, [projects]);
 
+  useEffect(() => {
+    const projects = JSON.parse(localStorage.getItem("timetracko.projects")) || [];
+    if (!projects.find(p => p.id === "PAUSE")) {
+      projects.push({
+        id: "PAUSE",
+        name: "Pause",
+        client: "System",
+        description: "Zeit, die nicht als Arbeit zählt",
+      });
+      localStorage.setItem("timetracko.projects", JSON.stringify(projects));
+    }
+  }, []);
+
   // ➕ Neues Projekt hinzufügen
   const addProject = (project) => {
     if (!project.id || !project.name) return;

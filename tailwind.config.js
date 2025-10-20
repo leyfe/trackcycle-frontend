@@ -19,10 +19,9 @@ export default {
     },
   },
   safelist: [
-    'border-indigo-400', 'border-emerald-400', 'border-violet-400', 'border-rose-400',
-    'bg-indigo-500', 'bg-emerald-500', 'bg-violet-500', 'bg-rose-500',
-    'bg-indigo-600', 'bg-emerald-600', 'bg-violet-600', 'bg-rose-600',
-    'text-indigo-400', 'text-emerald-400', 'text-violet-400', 'text-rose-400'
+    {
+      pattern: /(border|shadow|bg|text)-(indigo|emerald|violet|rose)-(400|500|600)/,
+    },
   ],
   plugins: [nextui()],
 }

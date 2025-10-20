@@ -40,14 +40,22 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
 
   const [timeframe, setTimeframe] = useState("7d");
 
+  const pauseEntries = entries.filter(e => e.projectId === "PAUSE");
+  const totalPauseHours = pauseEntries.reduce((s, e) => s + (parseFloat(e.duration) || 0), 0);
+
   /* ────────────── ENTRIES ────────────── */
   const filteredEntries = useMemo(() => {
     const cutoff = new Date();
     if (timeframe === "7d") cutoff.setDate(cutoff.getDate() - 7);
     else if (timeframe === "30d") cutoff.setDate(cutoff.getDate() - 30);
     else if (timeframe === "90d") cutoff.setDate(cutoff.getDate() - 90);
-    return entries.filter((e) => new Date(e.start) >= cutoff);
-  }, [entries, timeframe]);
+
+    return entries.filter((e) => {
+      const d = new Date(e.start);
+      const weekday = ["sun","mon","tue","wed","thu","fri","sat"][d.getDay()];
+      return d >= cutoff && workdays.includes(weekday) && e.projectId !== "PAUSE"; // 🧠 Pausen raus
+    });
+  }, [entries, timeframe, workdays]);
 
   // Markiere Arbeitstage
   const entriesWithFlags = filteredEntries.map((e) => {
@@ -310,6 +318,20 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">
             {summaryText}
           </p>
+        </CardBody>
+      </Card>
+
+      <Card className="bg-slate-900/70 border border-slate-700">
+        <CardBody>
+          <h2 className="text-slate-100 font-semibold mb-2">☕ Pausen</h2>
+          {pauseEntries.length === 0 ? (
+            <p className="text-slate-400 text-sm">Keine Pausen erfasst.</p>
+          ) : (
+            <ul className="text-slate-400 text-sm space-y-1">
+              <li>Gesamtzeit: {totalPauseHours.toFixed(2)} h</li>
+              <li>Anzahl Pausen: {pauseEntries.length}</li>
+            </ul>
+          )}
         </CardBody>
       </Card>
     </div>
