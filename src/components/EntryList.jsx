@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@nextui-org/react";
-import { Trash2, Edit, ChevronDown, RotateCw } from "lucide-react";
+import { Trash2, Edit, RotateCw } from "lucide-react";
 import { useToast } from "./Toast";
 import DayOverview from "./DayOverview";
 
-
 /* ----------------------------- EntryList ----------------------------- */
-export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRestart, onAdd, settings, onConvertToPause }) {
+export default function EntryList({
+  entries,
+  activeEntry,
+  onEdit,
+  onDelete,
+  onRestart,
+  onAdd,
+  settings,
+  onConvertToPause,
+}) {
   const [collapsedTasks, setCollapsedTasks] = useState({});
   const [visibleDays, setVisibleDays] = useState(7);
   const [hasMore, setHasMore] = useState(false);
@@ -15,9 +23,17 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
   const roundEnabled = settings?.roundToQuarter ?? false;
 
   if (!entries.length)
-    return <div className="text-slate-500 text-center mt-4">Noch keine Zeiteinträge vorhanden.</div>;
+    return (
+      <div className="text-slate-500 text-center mt-4">
+        Noch keine Zeiteinträge vorhanden.
+      </div>
+    );
 
   const roundToQuarter = (minutes) => Math.ceil(minutes / 15) * 15;
+
+  // 🧠 Helper: Pausen-Erkennung
+  const isPauseEntry = (entry) =>
+    entry.projectId === "PAUSE" || entry.projectName?.toLowerCase() === "pause";
 
   const getRoundedDurationsByTask = (dayEntries) => {
     const grouped = {};
@@ -54,7 +70,10 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
     return parseDate(b) - parseDate(a);
   });
 
-  useEffect(() => setHasMore(visibleDays < sortedDates.length), [visibleDays, sortedDates.length]);
+  useEffect(
+    () => setHasMore(visibleDays < sortedDates.length),
+    [visibleDays, sortedDates.length]
+  );
   const visibleDates = sortedDates.slice(0, visibleDays);
 
   const groupTasks = (dayEntries) => {
@@ -113,7 +132,6 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
       showToast("Es läuft bereits ein Timer!", "OK", null, 5000, "warning");
       return;
     }
-
     onRestart?.(entry);
   };
 
@@ -121,18 +139,33 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
     <div className="space-y-8">
       {visibleDates.map((date) => {
         const entriesForDay = groupedByDate[date];
-        const grouped = groupTasks(entriesForDay);
         const dayLabel = isToday(date) ? "Heute" : date;
 
+        // 🔹 Arbeitszeit ohne Pausen
+        const workingEntries = entriesForDay.filter((e) => !isPauseEntry(e));
+        const pauseEntries = entriesForDay.filter(isPauseEntry);
+
+        // 🔹 Arbeitszeit-Summe
         const roundedTasks = roundEnabled
-          ? getRoundedDurationsByTask(entriesForDay)
-          : entriesForDay.map((e) => ({
+          ? getRoundedDurationsByTask(workingEntries)
+          : workingEntries.map((e) => ({
               key: `${e.projectName || ""}__${e.description || ""}`,
               totalHours: parseFloat(e.duration || 0),
             }));
+        const dayRoundedTotal = roundedTasks.reduce(
+          (sum, t) => sum + t.totalHours,
+          0
+        );
 
-        const dayRoundedTotal = roundedTasks.reduce((sum, t) => sum + t.totalHours, 0);
+        // 🔸 Pausensumme
+        const pauseTotal = pauseEntries.reduce(
+          (sum, e) => sum + parseFloat(e.duration || 0),
+          0
+        );
 
+        const grouped = groupTasks(entriesForDay);
+
+        // 🔹 Lücken finden
         const allEntries = entriesForDay
           .filter((e) => e.start && e.end)
           .sort((a, b) => new Date(a.start) - new Date(b.start));
@@ -148,18 +181,29 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
             gaps.push({
               from: end,
               to: nextStart,
-              text: h > 0 ? `${h} h${m > 0 ? ` ${m} min` : ""}` : `${m} min`,
+              text:
+                h > 0
+                  ? `${h} h${m > 0 ? ` ${m} min` : ""}`
+                  : `${m} min`,
             });
           }
         }
 
         return (
           <div key={date}>
+            {/* 🧾 Tagesüberschrift */}
             <div className="flex justify-between items-center mb-3">
-              <h3 className="ml-4 text-slate-400 text-xs font-semibold">{dayLabel}</h3>
-              <span className="mr-4 text-slate-400 text-xs">
-                {formatTotalTime(dayRoundedTotal)} h
-              </span>
+              <h3 className="ml-4 text-slate-400 text-xs font-semibold">
+                {dayLabel}
+              </h3>
+              <div className="mr-4 text-xs text-slate-400 flex items-center gap-2">
+                <span>{formatTotalTime(dayRoundedTotal)} h</span>
+                {pauseTotal > 0 && (
+                  <span className="text-slate-500 italic">
+                    (– {formatTotalTime(pauseTotal)} Pause)
+                  </span>
+                )}
+              </div>
             </div>
 
             <DayOverview
@@ -168,126 +212,145 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
               onAddGapEntry={(entry) => onAdd(entry)}
               onConvertToPause={onConvertToPause}
             />
-          
-            {Object
-              .entries(grouped)
+
+            {Object.entries(grouped)
               .sort(([, listA], [, listB]) => {
-                const firstA = new Date(listA[0]?.start || 0);
-                const firstB = new Date(listB[0]?.start || 0);
-                return firstB - firstA; // 🟢 neueste zuerst
+                const lastA = new Date(listA[listA.length - 1]?.end || listA[listA.length - 1]?.start || 0);
+                const lastB = new Date(listB[listB.length - 1]?.end || listB[listB.length - 1]?.start || 0);
+                return lastB - lastA; // 🔹 neueste Gruppen zuerst
               })
               .map(([key, list]) => {
                 const totalDuration = roundEnabled
-                ? roundToQuarter(
-                    list.reduce((sum, e) => sum + parseFloat(e.duration || 0) * 60, 0)
-                  ) / 60
-                : list.reduce((sum, e) => sum + parseFloat(e.duration || 0), 0);
+                  ? roundToQuarter(
+                      list.reduce(
+                        (sum, e) => sum + parseFloat(e.duration || 0) * 60,
+                        0
+                      )
+                    ) / 60
+                  : list.reduce(
+                      (sum, e) => sum + parseFloat(e.duration || 0),
+                      0
+                    );
 
-              const { projectName, description } = list[0];
-              const collapsed = collapsedTasks[key] ?? true;
-              const toggle = () =>
-                setCollapsedTasks((prev) => ({ ...prev, [key]: !prev[key] }));
+                const { projectName, description } = list[0];
+                const collapsed = collapsedTasks[key] ?? true;
+                const toggle = () =>
+                  setCollapsedTasks((prev) => ({
+                    ...prev,
+                    [key]: !prev[key],
+                  }));
 
-              const isPauseGroup =
-                projectName?.toLowerCase() === "pause" ||
-                list[0]?.projectId === "PAUSE";
+                const isPauseGroup = isPauseEntry(list[0]);
 
-              return (
-                <div
-                  key={key}
-                  className={`group rounded-xl p-4 mb-3 border transition-all duration-300 relative ${
-                    isPauseGroup
-                      ? "bg-slate-600/30 border-slate-600/40 text-amber-200"
-                      : "bg-slate-900/70 border-slate-800 text-slate-100"
-                  }`}
-                >
+                return (
                   <div
-                    className="flex justify-between items-start cursor-pointer select-none"
-                    onClick={toggle}
+                    key={key}
+                    className={`group rounded-xl p-4 mb-3 border transition-all duration-300 relative ${
+                      isPauseGroup
+                        ? "bg-slate-600/30 border-slate-600/40 text-amber-200"
+                        : "bg-slate-900/70 border-slate-800 text-slate-100"
+                    }`}
                   >
-                    <div className="flex items-start gap-2 min-w-0 flex-1">
-                      <div
-                        className={`w-6 h-6 flex items-center justify-center rounded-md text-xs ${
-                          isPauseGroup
-                            ? "bg-slate-800/60 text-slate-300"
-                            : "bg-slate-800 text-slate-400"
-                        }`}
-                      >
-                        {list.length}
-                      </div>
-                      <div className="flex-1 min-w-0">
+                    <div
+                      className="flex justify-between items-start cursor-pointer select-none"
+                      onClick={toggle}
+                    >
+                      <div className="flex items-start gap-2 min-w-0 flex-1">
                         <div
-                          className={`font-semibold leading-snug ${
-                            isPauseGroup ? "text-slate-400" : "text-white"
+                          className={`w-6 h-6 flex items-center justify-center rounded-md text-xs ${
+                            isPauseGroup
+                              ? "bg-slate-800/60 text-slate-300"
+                              : "bg-slate-800 text-slate-400"
                           }`}
                         >
-                          {isPauseGroup ? "☕ Pause" : description}
+                          {list.length}
                         </div>
-                        <div
-                          className={`text-sm ${
-                            isPauseGroup ? "text-slate-500/80" : "text-slate-400"
-                          }`}
-                        >
-                          {isPauseGroup ? fmtDurationReadable(totalDuration) : projectName}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 🔸 Nur wenn kein Pause-Block */}
-                    {!isPauseGroup && (
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="relative w-6 h-6 flex items-center justify-center"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            className="absolute opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-                            onPress={() => handleRestart(list[list.length - 1])}
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className={`font-semibold leading-snug ${
+                              isPauseGroup ? "text-slate-400" : "text-white"
+                            }`}
                           >
-                            <RotateCw className={`w-4 h-4 text-${settings.accentColor}-400`} />
-                          </Button>
+                            {isPauseGroup ? "☕ Pause" : description}
+                          </div>
+                          <div
+                            className={`text-sm ${
+                              isPauseGroup
+                                ? "text-slate-500/80"
+                                : "text-slate-400"
+                            }`}
+                          >
+                            {isPauseGroup
+                              ? fmtDurationReadable(totalDuration)
+                              : projectName}
+                          </div>
                         </div>
-                        <span className="text-sm text-slate-400 whitespace-nowrap">
-                          {fmtDuration(totalDuration)} h
-                        </span>
                       </div>
-                    )}
-                  </div>
 
-                  {!collapsed && (
-                    <div className="space-y-2 mt-3">
-                      {list.map((e) => (
-                        <div
-                          key={e.id}
-                          className="flex justify-between items-center bg-slate-800/40 rounded-lg px-3 py-2"
-                        >
-                          <span className="text-xs text-slate-300">
-                            {formatTime(e.start)} – {formatTime(e.end)} (
-                            {fmtDurationReadable(e.duration)})
-                          </span>
-                          <div className="flex gap-1">
-                            <Button isIconOnly size="sm" variant="light" onPress={() => onEdit(e)}>
-                              <Edit className="w-4 h-4 text-slate-400" />
-                            </Button>
+                      {/* 🔸 Nur wenn kein Pause-Block */}
+                      {!isPauseGroup && (
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="relative w-6 h-6 flex items-center justify-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Button
                               isIconOnly
                               size="sm"
                               variant="light"
-                              onPress={() => onDelete(e.id)}
+                              className="absolute opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                              onPress={() =>
+                                handleRestart(list[list.length - 1])
+                              }
                             >
-                              <Trash2 className="w-4 h-4 text-slate-400" />
+                              <RotateCw
+                                className={`w-4 h-4 text-${settings.accentColor}-400`}
+                              />
                             </Button>
                           </div>
+                          <span className="text-sm text-slate-400 whitespace-nowrap">
+                            {fmtDuration(totalDuration)} h
+                          </span>
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+
+                    {!collapsed && (
+                      <div className="space-y-2 mt-3">
+                        {list.map((e) => (
+                          <div
+                            key={e.id}
+                            className="flex justify-between items-center bg-slate-800/40 rounded-lg px-3 py-2"
+                          >
+                            <span className="text-xs text-slate-300">
+                              {formatTime(e.start)} – {formatTime(e.end)} (
+                              {fmtDurationReadable(e.duration)})
+                            </span>
+                            <div className="flex gap-1">
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                onPress={() => onEdit(e)}
+                              >
+                                <Edit className="w-4 h-4 text-slate-400" />
+                              </Button>
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                onPress={() => onDelete(e.id)}
+                              >
+                                <Trash2 className="w-4 h-4 text-slate-400" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
 
             <hr className="my-12 h-0.5 border-none bg-slate-600/50" />
           </div>

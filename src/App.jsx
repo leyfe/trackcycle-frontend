@@ -11,9 +11,11 @@ import useSuggestions from "./hooks/useSuggestions";
 import EditTaskModal from "./components/EditTaskModal";
 
 export default function App() {
-  const [entries, setEntries] = useState(
-    JSON.parse(localStorage.getItem("timetracko.entries")) || []
-  );
+  // 🧠 Lokaler State
+  const [entries, setEntries] = useState(() => {
+    const stored = JSON.parse(localStorage.getItem("timetracko.entries")) || [];
+    return stored.sort((a, b) => new Date(b.start) - new Date(a.start));
+  });
 
   const [activeEntry, setActiveEntry] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -25,6 +27,8 @@ export default function App() {
       manualMode: false,
       manualFavorites: [],
       customLabels: {},
+      roundToQuarter: false,
+      accentColor: "indigo",
     }
   );
 
@@ -32,35 +36,34 @@ export default function App() {
   const { showToast } = useToast();
   const suggestions = useSuggestions(entries);
 
-  // 🧠 Einträge speichern
+  // 🧩 Hilfsfunktionen
+  const sortByStart = (a, b) => new Date(b.start) - new Date(a.start);
+  const writeSorted = (next) => [...next].sort(sortByStart);
+
+  // 🧠 Änderungen persistieren
   useEffect(() => {
     localStorage.setItem("timetracko.entries", JSON.stringify(entries));
   }, [entries]);
 
-  const sortByStart = (a, b) => new Date(b.start) - new Date(a.start);
-    const writeSorted = (next) => {
-      const sorted = [...next].sort(sortByStart);
-      localStorage.setItem("timetracko.entries", JSON.stringify(sorted));
-      return sorted;
-    };
-
-  // 🧠 Settings speichern
   const handleSettingsChange = (updatedSettings) => {
     setSettings(updatedSettings);
     localStorage.setItem("timetracko.settings", JSON.stringify(updatedSettings));
   };
 
-  // ➕ Neuen Eintrag hinzufügen
+  // ➕ Neuer Eintrag
   const handleAddEntry = useCallback(
     (entry) => {
-      setEntries((prev) => {
-        const sorted = writeSorted([...prev, entry]);
-        return sorted;
-      });
+      setEntries((prev) => writeSorted([...prev, entry]));
     },
     []
   );
 
+  // ➕ "Fehlende Buchung" hinzufügen
+  const handleAdd = (newEntry) => {
+    setEntries((prev) => writeSorted([...prev, newEntry]));
+  };
+
+  // ☕ Pause hinzufügen
   const handleConvertToPause = (gap) => {
     if (!gap) return;
     const pauseEntry = {
@@ -72,78 +75,64 @@ export default function App() {
       end: gap.to.toISOString(),
       duration: ((gap.to - gap.from) / 3600000).toFixed(2),
     };
-
-    setEntries((prev) => {
-      const sorted = writeSorted([...prev, pauseEntry]);
-      return sorted;
-    });
-
+    setEntries((prev) => writeSorted([...prev, pauseEntry]));
     showToast("☕ Pause hinzugefügt", "OK", null, 3000, "success");
-  };
-
-  const handleAdd = (newEntry) => {
-    setEntries((prev) => {
-      const sorted = writeSorted([...prev, newEntry]);
-      return sorted;
-    });
   };
 
   // 💾 Eintrag bearbeiten
   const handleSaveEditedTask = (updatedTask) => {
-    setEntries((prev) => {
-      const next = prev.map((e) =>
-        e.id === updatedTask.id
-          ? {
-              ...updatedTask,
-              // Dauer sauber aus Start/Ende berechnen:
-              duration: (
-                (new Date(updatedTask.end) - new Date(updatedTask.start)) /
-                1000 /
-                60 /
-                60
-              ).toFixed(2),
-            }
-          : e
-      );
-      const sorted = writeSorted(next);
-      return sorted;
-    });
+    setEntries((prev) =>
+      writeSorted(
+        prev.map((e) =>
+          e.id === updatedTask.id
+            ? {
+                ...updatedTask,
+                duration: (
+                  (new Date(updatedTask.end) - new Date(updatedTask.start)) /
+                  1000 /
+                  60 /
+                  60
+                ).toFixed(2),
+              }
+            : e
+        )
+      )
+    );
   };
 
-  // 🗑️ Eintrag löschen mit Undo
+  // 🗑️ Eintrag löschen + Undo
   const handleDeleteEntry = (id) => {
+    // 1️⃣ Schritt: Lokale Referenz merken
     const deletedEntry = entries.find((e) => e.id === id);
-    const updatedEntries = entries.filter((e) => e.id !== id);
-    setEntries(updatedEntries);
-    localStorage.setItem("timetracko.entries", JSON.stringify(updatedEntries));
+    if (!deletedEntry) return;
 
+    // 2️⃣ Schritt: State direkt aktualisieren
+    setEntries((prev) => writeSorted(prev.filter((e) => e.id !== id)));
+
+    // 3️⃣ Schritt: Toast außerhalb des State-Updaters
     showToast(
       "Eintrag gelöscht",
       "Rückgängig",
       () => {
-        const restored = [deletedEntry, ...updatedEntries];
-        setEntries(restored);
-        localStorage.setItem("timetracko.entries", JSON.stringify(restored));
+        // ✅ Undo innerhalb eines neuen State-Updates
+        setEntries((prev2) => writeSorted([deletedEntry, ...prev2]));
       },
-      5000
+      4000
     );
   };
 
   // 🔁 Task erneut starten
   const handleRestart = (entry) => {
-    // 🔸 Wenn schon ein Timer läuft → abbrechen
     if (activeEntry) {
       showToast("Es läuft bereits ein Timer!", "OK", null, 3000, "warning");
       return;
     }
 
-    // 🔸 Wenn das Projekt nicht bekannt ist → Toast zeigen
     if (!entry.projectId) {
       showToast("Dieses Favorit-Element hat kein Projekt zugewiesen", "OK", null, 3000, "error");
       return;
     }
 
-    // 🔸 Neues Entry-Objekt starten
     const restarted = {
       id: Date.now(),
       projectId: entry.projectId?.toString() || "",
@@ -154,34 +143,26 @@ export default function App() {
       duration: 0,
     };
 
-    // 🔸 Aktiv setzen
+    // 🧠 Nur aktiv setzen – noch NICHT speichern!
     setActiveEntry(restarted);
 
-    // 🔸 Optional direkt in entries speichern (für History-Ansicht)
-    setEntries((prev) => {
-      const updated = [restarted, ...prev];
-      localStorage.setItem("timetracko.entries", JSON.stringify(updated));
-      return updated;
-    });
-
-    // 🔸 Feedback anzeigen
     showToast(
-      `⏱ Neuer Timer gestartet für ${entry.projectName || "Projekt"} — ${entry.description || "Task"}`,
+      `⏱ Timer gestartet für ${entry.projectName}`,
       "OK",
       null,
       3000,
-      "warning"
+      "success"
     );
   };
 
-  // 🧠 Gesamtes Layout mit Tabs
+  // 🧱 App Layout
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white pb-24">
       <div className="max-w-3xl mx-auto p-6 space-y-6">
+
+        {/* 🏠 Hauptseite */}
         {activeTab === "home" && (
           <>
-            {/* ⏱ Eingabeformular */}
-
             <TimeEntryForm
               onAdd={handleAddEntry}
               activeEntry={activeEntry}
@@ -191,7 +172,6 @@ export default function App() {
               settings={settings}
             />
 
-            {/* ⭐ Favoritenleiste */}
             <FavoritesBar
               entries={entries}
               settings={settings}
@@ -205,7 +185,6 @@ export default function App() {
               }
             />
 
-            {/* 📋 Liste */}
             <EntryList
               entries={entries}
               activeEntry={activeEntry}
@@ -216,20 +195,22 @@ export default function App() {
               settings={settings}
               onDelete={handleDeleteEntry}
               onRestart={handleRestart}
-              onAdd={handleAdd}  
+              onAdd={handleAdd}
               onConvertToPause={handleConvertToPause}
             />
           </>
         )}
 
+        {/* 📊 Statistiken */}
         {activeTab === "stats" && (
           <StatsPage
             entries={entries}
-            settings={settings}  // ✅ pass settings here
+            settings={settings}
             onBack={() => setActiveTab("home")}
           />
         )}
 
+        {/* ⚙️ Einstellungen */}
         {activeTab === "settings" && (
           <SettingsPage
             entries={entries}
@@ -239,7 +220,7 @@ export default function App() {
         )}
       </div>
 
-      {/* 🔧 Edit Modal */}
+      {/* ✏️ Bearbeitungsmodal */}
       <EditTaskModal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
@@ -248,13 +229,13 @@ export default function App() {
         projects={projects}
       />
 
-      {/* 🔻 Bottom Navigation */}
-      <BottomNav activeTab={activeTab} onChange={setActiveTab} settings={settings}
- />
+      {/* 🔻 Navigation */}
+      <BottomNav activeTab={activeTab} onChange={setActiveTab} settings={settings} />
     </div>
   );
 }
 
+// 🎨 Accent-Farbe für Komponenten
 export function useAccentColor() {
   const stored = JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
   return stored.accentColor || "indigo";

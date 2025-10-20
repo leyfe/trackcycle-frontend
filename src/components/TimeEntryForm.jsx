@@ -84,17 +84,28 @@ export default function TimeEntryForm({
   };
 
   // ⏹ Timer stoppen
-  const stopTimer = () => {
-    if (!activeEntry) return;
-    const end = new Date().toISOString();
-    const duration = (new Date(end) - new Date(activeEntry.start)) / 1000 / 60 / 60;
-    const completed = { ...activeEntry, end, duration: duration.toFixed(2) };
+  // Stop-Timer
+const stopTimer = () => {
+  if (!activeEntry) return;
 
-    onAdd(completed);
-    setActiveEntry(null);
-    setDescription("");
-    setSelectedProject("");
+  const end = new Date().toISOString();
+  const duration =
+    (new Date(end) - new Date(activeEntry.start)) / 1000 / 60 / 60;
+
+  const completed = {
+    ...activeEntry,
+    end,
+    duration: duration.toFixed(2),
   };
+
+  // 🧩 Jetzt erst speichern
+  onAdd(completed);
+
+  // Zurücksetzen
+  setActiveEntry(null);
+  setDescription("");
+  setSelectedProject("");
+};
 
   // 🧮 Zeitformatierung
   function formatTime(seconds) {
