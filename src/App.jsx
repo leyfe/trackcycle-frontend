@@ -102,15 +102,47 @@ export default function App() {
 
   // 🔁 Task erneut starten
   const handleRestart = (entry) => {
+    // 🔸 Wenn schon ein Timer läuft → abbrechen
+    if (activeEntry) {
+      showToast("Es läuft bereits ein Timer!", "OK", null, 3000, "warning");
+      return;
+    }
+
+    // 🔸 Wenn das Projekt nicht bekannt ist → Toast zeigen
+    if (!entry.projectId) {
+      showToast("Dieses Favorit-Element hat kein Projekt zugewiesen", "OK", null, 3000, "error");
+      return;
+    }
+
+    // 🔸 Neues Entry-Objekt starten
     const restarted = {
       id: Date.now(),
-      projectId: entry.projectId,
-      projectName: entry.projectName,
-      description: entry.description,
+      projectId: entry.projectId?.toString() || "",
+      projectName: entry.projectName || "Unbekannt",
+      description: entry.description || "",
       start: new Date().toISOString(),
       end: null,
+      duration: 0,
     };
+
+    // 🔸 Aktiv setzen
     setActiveEntry(restarted);
+
+    // 🔸 Optional direkt in entries speichern (für History-Ansicht)
+    setEntries((prev) => {
+      const updated = [restarted, ...prev];
+      localStorage.setItem("timetracko.entries", JSON.stringify(updated));
+      return updated;
+    });
+
+    // 🔸 Feedback anzeigen
+    showToast(
+      `⏱ Neuer Timer gestartet für ${entry.projectName || "Projekt"} — ${entry.description || "Task"}`,
+      "OK",
+      null,
+      3000,
+      "warning"
+    );
   };
 
   // 🧠 Gesamtes Layout mit Tabs
@@ -189,4 +221,9 @@ export default function App() {
       <BottomNav activeTab={activeTab} onChange={setActiveTab} />
     </div>
   );
+}
+
+export function useAccentColor() {
+  const stored = JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
+  return stored.accentColor || "indigo";
 }

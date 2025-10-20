@@ -12,11 +12,14 @@ import {
 } from "@nextui-org/react";
 import { ProjectContext } from "../context/ProjectContext";
 import { CustomerContext } from "../context/CustomerContext";
-import { Trash2, Plus, Edit3, Save, X } from "lucide-react";
+import { Trash2, Plus, Edit3, Save, X, AlertTriangle } from "lucide-react";
+import { useToast } from "./Toast";
 
 export default function ProjectModal({ isOpen, onClose }) {
-  const { projects, addProject, deleteProject, updateProject } = useContext(ProjectContext);
+  const { projects, addProject, deleteProject, updateProject, setProjects } =
+    useContext(ProjectContext);
   const { customers } = useContext(CustomerContext);
+  const { showToast } = useToast();
 
   const [projectId, setProjectId] = useState("");
   const [projectName, setProjectName] = useState("");
@@ -32,7 +35,9 @@ export default function ProjectModal({ isOpen, onClose }) {
     description: "",
     maxHours: "",
   });
+  const [editIdMode, setEditIdMode] = useState(false);
 
+  // 🧩 Neues Projekt anlegen
   const handleAdd = () => {
     const id = projectId.trim();
     const name = projectName.trim();
@@ -66,6 +71,7 @@ export default function ProjectModal({ isOpen, onClose }) {
     setMaxHours("");
   };
 
+  // ✏️ Projekt bearbeiten
   const handleEdit = (project) => {
     setEditId(project.id);
     setEditData({
@@ -75,22 +81,80 @@ export default function ProjectModal({ isOpen, onClose }) {
       description: project.description || "",
       maxHours: project.maxHours || "",
     });
+    setEditIdMode(false);
   };
 
+  // 💾 Änderungen speichern (inkl. Migration, falls ID geändert wurde)
   const handleSaveEdit = () => {
     if (!editData.name.trim()) {
       alert("Projektname darf nicht leer sein.");
       return;
     }
 
-    if (updateProject) updateProject(editData.id, editData.name, editData.client);
+    const oldId = editId;
+    const newId = editData.id.trim();
 
-    const stored = JSON.parse(localStorage.getItem("timetracko.projects")) || [];
-    const updated = stored.map((p) => (p.id === editData.id ? editData : p));
-    localStorage.setItem("timetracko.projects", JSON.stringify(updated));
+    // Wenn ID geändert wurde → Migration
+    if (oldId !== newId) {
+      if (
+        !window.confirm(
+          `⚠️ Bist du sicher, dass du die Projekt-ID ändern willst?\n\nDies kann bestehende Zeiteinträge und Favoriten beeinflussen.`
+        )
+      ) {
+        return;
+      }
+
+      // 1️⃣ Zeiteinträge aktualisieren
+      let entries = JSON.parse(localStorage.getItem("timetracko.entries") || "[]");
+      entries = entries.map((e) =>
+        e.projectId === oldId ? { ...e, projectId: newId } : e
+      );
+      localStorage.setItem("timetracko.entries", JSON.stringify(entries));
+
+      // 2️⃣ Favoriten in Settings anpassen
+      let settings = JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
+
+      if (Array.isArray(settings.manualFavorites)) {
+        settings.manualFavorites = settings.manualFavorites.map((key) => {
+          const [pid, desc] = key.split("::");
+          return pid === oldId ? `${newId}::${desc}` : key;
+        });
+      }
+
+      if (settings.customLabels) {
+        const newLabels = {};
+        for (const key in settings.customLabels) {
+          const [pid, desc] = key.split("::");
+          const newKey = pid === oldId ? `${newId}::${desc}` : key;
+          newLabels[newKey] = settings.customLabels[key];
+        }
+        settings.customLabels = newLabels;
+      }
+
+      localStorage.setItem("timetracko.settings", JSON.stringify(settings));
+
+      // 3️⃣ Projekte aktualisieren
+      const storedProjects = JSON.parse(localStorage.getItem("timetracko.projects")) || [];
+      const updatedProjects = storedProjects.map((p) =>
+        p.id === oldId ? { ...editData } : p
+      );
+      localStorage.setItem("timetracko.projects", JSON.stringify(updatedProjects));
+      setProjects(updatedProjects);
+
+      showToast("Projekt-ID geändert und Daten migriert ✅", "OK", null, 4000, "success");
+    } else {
+      // Nur Name oder Beschreibung geändert
+      const stored = JSON.parse(localStorage.getItem("timetracko.projects")) || [];
+      const updated = stored.map((p) => (p.id === editData.id ? editData : p));
+      localStorage.setItem("timetracko.projects", JSON.stringify(updated));
+      showToast("Projekt gespeichert ✅", "OK", null, 2000, "success");
+    }
+
+    if (updateProject) updateProject(editData.id, editData.name, editData.client);
 
     setEditId(null);
     setEditData({ id: "", name: "", client: "", description: "", maxHours: "" });
+    setEditIdMode(false);
   };
 
   return (
@@ -98,7 +162,7 @@ export default function ProjectModal({ isOpen, onClose }) {
       <ModalContent className="py-6">
         <ModalHeader>Projekte verwalten</ModalHeader>
         <ModalBody>
-          {/* Neues Projekt anlegen */}
+          {/* Neues Projekt */}
           <Input
             label="Projekt-ID"
             placeholder="z. B. P-001"
@@ -111,7 +175,6 @@ export default function ProjectModal({ isOpen, onClose }) {
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
           />
-
           <Select
             label="Kunde auswählen"
             selectedKeys={[selectedCustomer]}
@@ -122,14 +185,12 @@ export default function ProjectModal({ isOpen, onClose }) {
               <SelectItem key={c.id}>{c.name}</SelectItem>
             ))}
           </Select>
-
           <Textarea
             label="Projektbeschreibung (optional)"
             placeholder="Kurze Notiz oder Beschreibung zum Projekt..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-
           <Input
             type="number"
             label="Maximal buchbare Stunden (optional)"
@@ -159,7 +220,24 @@ export default function ProjectModal({ isOpen, onClose }) {
                       }
                       size="sm"
                       className="mb-2"
+                      isDisabled={!editIdMode}
                     />
+                    {!editIdMode ? (
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        color="warning"
+                        startContent={<AlertTriangle className="w-4 h-4" />}
+                        onPress={() => setEditIdMode(true)}
+                      >
+                        ID ändern (mit Warnung)
+                      </Button>
+                    ) : (
+                      <div className="text-xs text-amber-400 mt-1 mb-2">
+                        ⚠️ Änderungen der ID können bestehende Daten beeinflussen!
+                      </div>
+                    )}
+
                     <Input
                       label="Projektname"
                       value={editData.name}
@@ -206,19 +284,10 @@ export default function ProjectModal({ isOpen, onClose }) {
                     />
 
                     <div className="flex justify-end gap-2">
-                      <Button
-                        color="primary"
-                        size="sm"
-                        variant="flat"
-                        onPress={handleSaveEdit}
-                      >
+                      <Button color="primary" size="sm" variant="flat" onPress={handleSaveEdit}>
                         <Save className="w-4 h-4 mr-1" /> Speichern
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="light"
-                        onPress={() => setEditId(null)}
-                      >
+                      <Button size="sm" variant="light" onPress={() => setEditId(null)}>
                         <X className="w-4 h-4 mr-1" /> Abbrechen
                       </Button>
                     </div>
@@ -242,20 +311,10 @@ export default function ProjectModal({ isOpen, onClose }) {
                       )}
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="light"
-                        onPress={() => handleEdit(p)}
-                      >
+                      <Button isIconOnly size="sm" variant="light" onPress={() => handleEdit(p)}>
                         <Edit3 className="w-5 h-5 text-slate-400" />
                       </Button>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="light"
-                        onPress={() => deleteProject(p.id)}
-                      >
+                      <Button isIconOnly size="sm" variant="light" onPress={() => deleteProject(p.id)}>
                         <Trash2 className="w-5 h-5 text-slate-500" />
                       </Button>
                     </div>

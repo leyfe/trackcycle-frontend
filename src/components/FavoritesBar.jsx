@@ -84,12 +84,13 @@ export default function FavoritesBar({ entries = [], settings = {}, activeEntry,
             variant="flat"
             className="bg-slate-700 text-slate-200 hover:bg-slate-600 transition-all px-3 rounded-lg shadow-sm hover:shadow-md flex-shrink-0"
             onPress={() => {
-                if (activeEntry) {
-                  showToast("Es läuft bereits ein Timer!", "OK", null, 5000);
-                  return;
-                }
-                onSelect(t);
-              }}
+              if (!t.projectId) return; // 🧩 safety
+              onSelect({
+                projectId: t.projectId.toString(), // ✅ String erzwingen
+                projectName: t.projectName,
+                description: t.description,
+              });
+            }}
             title={`${t.projectName} — ${t.description}`}
           >
             {customLabels[t.key] || t.description}

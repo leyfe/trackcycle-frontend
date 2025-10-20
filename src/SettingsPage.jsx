@@ -15,6 +15,8 @@ import PageHeader from "./components/PageHeader";
 import { useToast } from "./components/Toast";
 import useICalCalendar from "./hooks/useICalCalendar";
 import CalendarSuggestions from "./components/CalendarSuggestions";
+import AccentColorPicker from "./components/AccentColorPicker";
+
 
 export default function SettingsPage({ entries, onSettingsChange, onBack }) {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -229,8 +231,14 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
             </span>
             <Switch
               size="sm"
-              color="primary"
+              color={settings.accentColor || "primary"}
               isSelected={settings.roundToQuarter}
+              classNames={{
+                wrapper: `
+                  data-[selected=true]:bg-${settings.accentColor}-600
+                  data-[selected=true]:hover:bg-${settings.accentColor}-500
+                `
+              }}
               onValueChange={(val) => {
                 setSettings((prev) => ({ ...prev, roundToQuarter: val }));
                 showToast("Einstellung gespeichert", "OK", null, 3000, "success");
@@ -241,8 +249,14 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                 <span className="text-slate-300 text-sm">Favoriten anzeigen?</span>
                 <Switch
                   size="sm"
-                  color="primary"
+                  color={settings.accentColor || "primary"}
                   isSelected={settings.showFavorites}
+                  classNames={{
+                    wrapper: `
+                      data-[selected=true]:bg-${settings.accentColor}-600
+                      data-[selected=true]:hover:bg-${settings.accentColor}-500
+                    `
+                  }}
                   onValueChange={() => {
                     toggleSetting("showFavorites");
                     showToast("Einstellung gespeichert", "OK", null, 3000, "success");
@@ -288,6 +302,17 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
           </div>
         </CardBody>
       </Card>
+
+      <AccentColorPicker
+        accentColor={settings.accentColor || "indigo"}
+        onChange={(color) => {
+          const newSettings = { ...settings, accentColor: color };
+          setSettings(newSettings);
+          localStorage.setItem("timetracko.settings", JSON.stringify(newSettings));
+          console.log(settings.accentColor)
+        }}
+      />
+
       <div className="grid gap-4">
         <div className="space-y-6 mt-6 pb-24">
           {/* 🔸 Favoriten */}

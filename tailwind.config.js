@@ -10,5 +10,10 @@ export default {
   theme: {
     extend: {},
   },
+  safelist: [
+    'border-indigo-400', 'border-emerald-400', 'border-violet-400', 'border-rose-400',
+    'bg-indigo-500', 'bg-emerald-500', 'bg-violet-500', 'bg-rose-500',
+    'text-indigo-400', 'text-emerald-400', 'text-violet-400', 'text-rose-400'
+  ],
   plugins: [nextui()],
-};
+}

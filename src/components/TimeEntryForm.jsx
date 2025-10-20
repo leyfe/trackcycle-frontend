@@ -52,7 +52,7 @@ export default function TimeEntryForm({
   useEffect(() => {
     if (activeEntry) {
       setDescription(activeEntry.description || "");
-      setSelectedProject(activeEntry.projectId || "");
+      setSelectedProject(activeEntry.projectId?.toString() || ""); // ✅ String erzwingen
       setCustomStartTime(new Date(activeEntry.start).toISOString().slice(0, 16));
     }
   }, [activeEntry]);
