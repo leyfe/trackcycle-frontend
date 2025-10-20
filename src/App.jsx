@@ -37,6 +37,13 @@ export default function App() {
     localStorage.setItem("timetracko.entries", JSON.stringify(entries));
   }, [entries]);
 
+  const sortByStart = (a, b) => new Date(b.start) - new Date(a.start);
+    const writeSorted = (next) => {
+      const sorted = [...next].sort(sortByStart);
+      localStorage.setItem("timetracko.entries", JSON.stringify(sorted));
+      return sorted;
+    };
+
   // 🧠 Settings speichern
   const handleSettingsChange = (updatedSettings) => {
     setSettings(updatedSettings);
@@ -46,16 +53,16 @@ export default function App() {
   // ➕ Neuen Eintrag hinzufügen
   const handleAddEntry = useCallback(
     (entry) => {
-      const updated = [entry, ...entries];
-      setEntries(updated);
-      localStorage.setItem("timetracko.entries", JSON.stringify(updated));
+      setEntries((prev) => {
+        const sorted = writeSorted([...prev, entry]);
+        return sorted;
+      });
     },
-    [entries]
+    []
   );
 
   const handleConvertToPause = (gap) => {
     if (!gap) return;
-
     const pauseEntry = {
       id: Date.now(),
       projectId: "PAUSE",
@@ -67,40 +74,40 @@ export default function App() {
     };
 
     setEntries((prev) => {
-      const updated = [...prev, pauseEntry];
-      return updated.sort((a, b) => new Date(a.start) - new Date(b.start));
+      const sorted = writeSorted([...prev, pauseEntry]);
+      return sorted;
     });
 
-    localStorage.setItem("timetracko.entries", JSON.stringify(entries));
     showToast("☕ Pause hinzugefügt", "OK", null, 3000, "success");
   };
 
   const handleAdd = (newEntry) => {
     setEntries((prev) => {
-      const updated = [...prev, newEntry];
-
-      // Sortiere alle Einträge nach Startzeit
-      return updated.sort((a, b) => new Date(a.start) - new Date(b.start));
+      const sorted = writeSorted([...prev, newEntry]);
+      return sorted;
     });
   };
 
   // 💾 Eintrag bearbeiten
   const handleSaveEditedTask = (updatedTask) => {
-    const updatedEntries = entries.map((e) =>
-      e.id === updatedTask.id
-        ? {
-            ...updatedTask,
-            duration: (
-              (new Date(updatedTask.end) - new Date(updatedTask.start)) /
-              1000 /
-              60 /
-              60
-            ).toFixed(2),
-          }
-        : e
-    );
-    setEntries(updatedEntries);
-    localStorage.setItem("timetracko.entries", JSON.stringify(updatedEntries));
+    setEntries((prev) => {
+      const next = prev.map((e) =>
+        e.id === updatedTask.id
+          ? {
+              ...updatedTask,
+              // Dauer sauber aus Start/Ende berechnen:
+              duration: (
+                (new Date(updatedTask.end) - new Date(updatedTask.start)) /
+                1000 /
+                60 /
+                60
+              ).toFixed(2),
+            }
+          : e
+      );
+      const sorted = writeSorted(next);
+      return sorted;
+    });
   };
 
   // 🗑️ Eintrag löschen mit Undo

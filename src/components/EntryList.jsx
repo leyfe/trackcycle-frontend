@@ -169,8 +169,15 @@ export default function EntryList({ entries, activeEntry, onEdit, onDelete, onRe
               onConvertToPause={onConvertToPause}
             />
           
-            {Object.entries(grouped).map(([key, list]) => {
-              const totalDuration = roundEnabled
+            {Object
+              .entries(grouped)
+              .sort(([, listA], [, listB]) => {
+                const firstA = new Date(listA[0]?.start || 0);
+                const firstB = new Date(listB[0]?.start || 0);
+                return firstB - firstA; // 🟢 neueste zuerst
+              })
+              .map(([key, list]) => {
+                const totalDuration = roundEnabled
                 ? roundToQuarter(
                     list.reduce((sum, e) => sum + parseFloat(e.duration || 0) * 60, 0)
                   ) / 60
