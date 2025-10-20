@@ -187,10 +187,10 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
 
       {/* Kennzahlen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard icon={<Flame />} label="Streak" value={`${streak} Tage`} />
-        <StatCard icon={<Diamond />} label="Perfekte Tage" value={perfectDays} />
-        <StatCard icon={<Brain />} label="Fokus-Score" value={`${focusScore}%`} />
-        <StatCard icon={<Clock />} label="Ø Arbeitszeit" value={`${avgHours} h`} />
+        <StatCard icon={<Flame />} label="Streak" value={`${streak} Tage`} accentColor={settings.accentColor} />
+        <StatCard icon={<Diamond />} label="Perfekte Tage" value={perfectDays} accentColor={settings.accentColor} />
+        <StatCard icon={<Brain />} label="Fokus-Score" value={`${focusScore}%`} accentColor={settings.accentColor} />
+        <StatCard icon={<Clock />} label="Ø Arbeitszeit" value={`${avgHours} h`} accentColor={settings.accentColor} />
       </div>
 
       {/* Wochenbalken */}
@@ -339,12 +339,12 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
 }
 
 /* ────────────── Helper-Komponenten ────────────── */
-function StatCard({ icon, label, value }) {
+function StatCard({ icon, label, value, accentColor = "indigo" }) {
   return (
     <Card className="bg-slate-900/60 border border-slate-700 p-3 text-center hover:bg-slate-800/60 transition-all duration-300">
       <CardBody>
         <div className="flex flex-col items-center space-y-1">
-          <div className="text-indigo-400">{icon}</div>
+          <div className={`text-${accentColor}-400`}>{icon}</div>
           <div className="text-xs text-slate-400">{label}</div>
           <div className="text-base font-semibold text-slate-100">{value}</div>
         </div>

@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import { Button, Input, Select, SelectItem, Card, CardBody } from "@nextui-org/react";
 import { ProjectContext } from "../context/ProjectContext"; // falls du den Context nutzt
 
-export default function DayOverview({ gaps, totalHours, onAddGapEntry, onConvertToPause }) {
+export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntry, onConvertToPause }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeGap, setActiveGap] = useState(null);
   const [description, setDescription] = useState("");
@@ -20,6 +20,23 @@ export default function DayOverview({ gaps, totalHours, onAddGapEntry, onConvert
   const remainingMin = Math.max(0, Math.round(remaining * 60));
   const rh = Math.floor(remainingMin / 60);
   const rm = remainingMin % 60;
+
+  // 🟡 Nicht-buchbare Projekte prüfen
+  const nonBillableProjects = ["SAL-001", "INTERN", "TEST"];
+  const nonBillableEntries = (dayEntries || []).filter((e) =>
+    nonBillableProjects.includes(e.projectId)
+  );
+
+  const nonBillableHours = nonBillableEntries.reduce(
+    (sum, e) => sum + parseFloat(e.duration || 0),
+    0
+  );
+
+  const totalDayHours = totalHours || 0;
+  const nonBillableRatio = totalDayHours > 0 ? nonBillableHours / totalDayHours : 0;
+
+  const showNonBillableWarning =
+    nonBillableHours > 2 || nonBillableRatio > 0.5;
 
   if (gaps.length === 0 && !isIncomplete) return null;
 
@@ -71,6 +88,12 @@ export default function DayOverview({ gaps, totalHours, onAddGapEntry, onConvert
           isOpen ? "max-h-[600px] opacity-100 py-3" : "max-h-0 opacity-0 py-0"
         } overflow-hidden text-sm`}
       >
+        {showNonBillableWarning && (
+          <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs px-3 py-2 rounded-lg mb-3">
+            ⚠️ Du hast heute viel Zeit auf nicht buchbare Projekte gebucht{" "}
+            ({[...new Set(nonBillableEntries.map((e) => e.projectId))].join(", ")}).
+          </div>
+        )}
         {/* Fehlende Buchungen */}
         {gaps.length > 0 && (
           <>

@@ -68,6 +68,15 @@ export default function FavoritesBar({ entries = [], settings = {}, activeEntry,
     });
   };
 
+  const uniqueDisplayTasks = useMemo(() => {
+    const seen = new Set();
+    return displayTasks.filter((t) => {
+      if (seen.has(t.key)) return false;
+      seen.add(t.key);
+      return true;
+    });
+  }, [displayTasks]);
+
   return (
     <div className="relative w-full">
 
@@ -77,7 +86,7 @@ export default function FavoritesBar({ entries = [], settings = {}, activeEntry,
         className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 pt-1 scroll-smooth"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        {displayTasks.map((t) => (
+        {uniqueDisplayTasks.map((t) => (
           <Button
             key={t.key}
             size="sm"

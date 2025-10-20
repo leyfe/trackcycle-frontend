@@ -198,17 +198,13 @@ export default function EntryList({
               </h3>
               <div className="mr-4 text-xs text-slate-400 flex items-center gap-2">
                 <span>{formatTotalTime(dayRoundedTotal)} h</span>
-                {pauseTotal > 0 && (
-                  <span className="text-slate-500 italic">
-                    (– {formatTotalTime(pauseTotal)} Pause)
-                  </span>
-                )}
               </div>
             </div>
 
             <DayOverview
               gaps={gaps}
               totalHours={dayRoundedTotal}
+              dayEntries={entriesForDay} 
               onAddGapEntry={(entry) => onAdd(entry)}
               onConvertToPause={onConvertToPause}
             />
