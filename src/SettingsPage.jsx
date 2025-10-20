@@ -251,6 +251,43 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
               </div>
         </CardBody>
       </Card>
+
+      <Card className="bg-slate-900/70 border border-slate-700 shadow-lg">
+        <CardBody className="space-y-4">
+          <h2 className="text-lg font-semibold text-slate-100">Arbeitstage</h2>
+          <p className="text-slate-400 text-xs">
+            Wähle aus, an welchen Tagen du normalerweise arbeitest. Nur diese Tage
+            werden in den Statistiken berücksichtigt.
+          </p>
+
+          <div className="grid grid-cols-7 gap-2">
+            {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day, i) => {
+              const dayKey = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][i];
+              const selected = settings.workdays?.includes(dayKey);
+
+              return (
+                <Button
+                  key={day}
+                  size="xs"
+                  variant={selected ? "solid" : "flat"}
+                  color={selected ? "indigo" : "default"}
+                  className={`text-xs min-w-10 min-h-8 h-8 ${selected ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-300"}`}
+                  onPress={() =>
+                    setSettings((prev) => {
+                      const workdays = new Set(prev.workdays || []);
+                      if (workdays.has(dayKey)) workdays.delete(dayKey);
+                      else workdays.add(dayKey);
+                      return { ...prev, workdays: Array.from(workdays) };
+                    })
+                  }
+                >
+                  {day}
+                </Button>
+              );
+            })}
+          </div>
+        </CardBody>
+      </Card>
       <div className="grid gap-4">
         <div className="space-y-6 mt-6 pb-24">
           {/* 🔸 Favoriten */}

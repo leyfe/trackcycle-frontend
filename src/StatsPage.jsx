@@ -25,8 +25,8 @@ const COLORS = ["#6366f1", "#8b5cf6", "#14b8a6", "#f59e0b", "#f43f5e"];
 const roundToQuarter = (minutes) => Math.ceil(minutes / 15) * 15;
 
 export default function StatsPage({ entries = [], settings: incomingSettings, onBack }) {
-  // 🔹 Einstellungen laden (Prop oder localStorage)
-  const stored = (() => {
+  /* ────────────── SETTINGS ────────────── */
+  const storedSettings = (() => {
     try {
       return JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
     } catch {
@@ -34,12 +34,13 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
     }
   })();
 
-  const settings = incomingSettings ?? stored ?? {};
+  const settings = incomingSettings ?? storedSettings ?? {};
   const roundEnabled = !!settings.roundToQuarter;
+  const workdays = settings.workdays ?? ["mon", "tue", "wed", "thu", "fri"];
 
   const [timeframe, setTimeframe] = useState("7d");
 
-  // 🔹 Filterung nach Zeitraum
+  /* ────────────── ENTRIES ────────────── */
   const filteredEntries = useMemo(() => {
     const cutoff = new Date();
     if (timeframe === "7d") cutoff.setDate(cutoff.getDate() - 7);
@@ -48,16 +49,18 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
     return entries.filter((e) => new Date(e.start) >= cutoff);
   }, [entries, timeframe]);
 
-  const today = new Date();
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    return d.toLocaleDateString("de-DE", { weekday: "short" });
-  }).reverse();
+  // Markiere Arbeitstage
+  const entriesWithFlags = filteredEntries.map((e) => {
+    const weekday = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(e.start).getDay()];
+    return { ...e, isWorkday: workdays.includes(weekday) };
+  });
 
-  /* ────────────── Kennzahlen: korrekt gerundet ────────────── */
+  /* ────────────── KENNZAHLEN ────────────── */
+  const workEntries = entriesWithFlags.filter((e) => e.isWorkday);
+
+  // Gruppierung & Rundung
   const dayMap = {};
-  for (const e of filteredEntries) {
+  for (const e of workEntries) {
     const dayKey = new Date(e.start).toDateString();
     const taskKey = `${dayKey}__${e.projectName || "?"}__${e.description || "?"}`;
     const durMin = (parseFloat(e.duration) || 0) * 60;
@@ -77,68 +80,68 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   const totalHours = totalMinutes / 60;
   const avgHours = totalDays ? (totalHours / totalDays).toFixed(2) : "0.00";
   const perfectDays = Object.values(dailyTotals).filter((m) => m / 60 >= 8).length;
-  const streak = calcStreak(filteredEntries);
-  const focusScore = calcFocus(filteredEntries);
+  const streak = calcStreak(workEntries);
+  const focusScore = calcFocus(workEntries);
 
-  /* ────────────── Wochenbalken: aggregiert & gerundet ────────────── */
-  const weeklyData = useMemo(() => {
-    const dayMap = {};
-    for (const e of filteredEntries) {
-      const dayKey = new Date(e.start).toLocaleDateString("de-DE", { weekday: "short" });
-      const key = `${dayKey}__${e.projectName || "?"}__${e.description || "?"}`;
-      const durMin = (parseFloat(e.duration) || 0) * 60;
-      if (!dayMap[key]) dayMap[key] = 0;
-      dayMap[key] += durMin;
-    }
+  /* ────────────── WÖCHENTLICHE DATEN ────────────── */
+  const today = new Date();
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const weekday = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][d.getDay()];
+    return { label: weekday, date: d };
+  }).reverse();
 
-    const dailyTotals = {};
-    for (const key in dayMap) {
-      const [day] = key.split("__");
-      const total = roundEnabled ? roundToQuarter(dayMap[key]) : dayMap[key];
-      dailyTotals[day] = (dailyTotals[day] || 0) + total;
-    }
+  const weeklyData = last7Days.map(({ label, date }) => {
+    const weekday = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][date.getDay()];
+    const isWorkday = workdays.includes(weekday);
 
-    return last7Days.map((day) => ({
-      day,
-      hours: (dailyTotals[day] || 0) / 60,
-    }));
-  }, [filteredEntries, roundEnabled]);
+    const dayEntries = filteredEntries.filter(
+      (e) => new Date(e.start).toDateString() === date.toDateString()
+    );
+    const total = dayEntries.reduce((sum, e) => sum + (parseFloat(e.duration) || 0) * 60, 0);
+    const rounded = roundEnabled ? roundToQuarter(total) : total;
 
-  /* ────────────── Projektverteilung: aggregiert & gerundet ────────────── */
+    return {
+      day: label,
+      hours: rounded / 60,
+      isWorkday,
+    };
+  });
+
+  /* ────────────── PROJEKTVERTEILUNG ────────────── */
   const projectData = useMemo(() => {
     const projMap = {};
-    for (const e of filteredEntries) {
+    for (const e of workEntries) {
       if (!e.projectName) continue;
       const key = `${e.projectName}__${e.description || "?"}`;
       const durMin = (parseFloat(e.duration) || 0) * 60;
       if (!projMap[key]) projMap[key] = 0;
       projMap[key] += durMin;
     }
-
     const projectTotals = {};
     for (const key in projMap) {
       const [project] = key.split("__");
       const total = roundEnabled ? roundToQuarter(projMap[key]) : projMap[key];
       projectTotals[project] = (projectTotals[project] || 0) + total;
     }
-
     return Object.entries(projectTotals)
       .map(([project, minutes]) => ({ project, hours: minutes / 60 }))
       .sort((a, b) => b.hours - a.hours);
-  }, [filteredEntries, roundEnabled]);
+  }, [workEntries, roundEnabled]);
 
-  /* ────────────── Zusammenfassungstext ────────────── */
+  /* ────────────── SUMMARY ────────────── */
   const summaryText = `
-Du hast in diesem Zeitraum ${totalDays} Tage gearbeitet, durchschnittlich ${avgHours} h pro Tag.
+Du hast in diesem Zeitraum ${totalDays} Arbeitstage erfasst, durchschnittlich ${avgHours} h pro Tag.
 Dein längster Streak beträgt ${streak} Tage 🔥.
 ${perfectDays > 0 ? `Du hattest ${perfectDays} perfekte Tage 💎 – stark!` : ""}
 Dein Fokus-Score liegt bei ${focusScore}% 🧠.
 `;
 
-  /* ────────────── Render ────────────── */
+  /* ────────────── RENDER ────────────── */
   return (
     <div className="space-y-8">
-      {/* ✅ Header */}
+      {/* Header */}
       <PageHeader title="Statistiken" onBack={onBack}>
         <Dropdown>
           <DropdownTrigger>
@@ -168,14 +171,13 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
         </Dropdown>
       </PageHeader>
 
-      {/* Hinweis bei Rundung */}
       {roundEnabled && (
         <p className="text-xs text-slate-400 italic -mt-4 mb-2">
           ⏱ Werte inkl. Rundung auf 15-Minuten-Blöcke
         </p>
       )}
 
-      {/* 🔹 Statistikkarten */}
+      {/* Kennzahlen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard icon={<Flame />} label="Streak" value={`${streak} Tage`} />
         <StatCard icon={<Diamond />} label="Perfekte Tage" value={perfectDays} />
@@ -183,17 +185,19 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
         <StatCard icon={<Clock />} label="Ø Arbeitszeit" value={`${avgHours} h`} />
       </div>
 
-      {/* 🔹 Wochenbalken */}
+      {/* Wochenbalken */}
       <Card className="bg-slate-900/70 border border-slate-700">
         <CardBody>
-          <h2 className="text-slate-100 font-semibold mb-3">
-            Arbeitszeit (letzte 7 Tage)
-          </h2>
+          <h2 className="text-slate-100 font-semibold mb-3">Arbeitszeit (letzte 7 Tage)</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={weeklyData}>
               <XAxis dataKey="day" tick={{ fill: "#94a3b8" }} />
               <Tooltip
-                formatter={(v) => `${v} h`}
+                formatter={(v, _, { payload }) =>
+                  payload.isWorkday
+                    ? `${v} h`
+                    : `${v} h (nicht als Arbeitstag definiert)`
+                }
                 contentStyle={{
                   backgroundColor: "#1e293b",
                   border: "none",
@@ -204,21 +208,28 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
                 {weeklyData.map((entry, idx) => (
                   <Cell
                     key={idx}
-                    fill={entry.hours >= 8 ? "#14b8a6" : "#6366f1"}
+                    fill={
+                      entry.isWorkday
+                        ? entry.hours >= 8
+                          ? "#14b8a6"
+                          : "#6366f1"
+                        : "rgba(100,116,139,0.4)"
+                    }
                   />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          <p className="text-xs text-slate-500 mt-2">
+            * Nicht-Arbeitstage werden angezeigt, aber nicht in Kennzahlen einbezogen.
+          </p>
         </CardBody>
       </Card>
 
-      {/* 🔹 Projektverteilung */}
+      {/* Projektverteilung */}
       <Card className="bg-slate-900/70 border border-slate-700">
         <CardBody>
-          <h2 className="text-slate-100 font-semibold mb-3">
-            Projektverteilung
-          </h2>
+          <h2 className="text-slate-100 font-semibold mb-3">Projektverteilung</h2>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
@@ -255,7 +266,7 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           </h2>
           {(() => {
             const shortDays = weeklyData
-              .filter((d) => d.hours > 0 && d.hours < 8)
+              .filter((d) => d.isWorkday && d.hours > 0 && d.hours < 8)
               .map((d) => d.day);
             const heavyProjects = projectData.filter((p) => p.hours >= 4);
 
@@ -296,28 +307,9 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           <h2 className="text-slate-100 font-semibold mb-2 flex items-center gap-2">
             🧠 Zusammenfassung
           </h2>
-          {(() => {
-            const under8 = weeklyData.filter(
-              (d) => d.hours > 0 && d.hours < 8
-            ).length;
-            const topTask = projectData[0];
-            return (
-              <ul className="text-slate-400 text-sm leading-relaxed list-disc pl-4 space-y-1">
-                <li>Du hast insgesamt {totalHours.toFixed(1)} h gebucht.</li>
-                <li>Ø {avgHours} h pro Arbeitstag.</li>
-                {under8 > 0 && (
-                  <li>{under8} Tage unter 8 h – vielleicht noch unvollständig.</li>
-                )}
-                {topTask && (
-                  <li>
-                    Top Projekt:{" "}
-                    <span className="text-slate-200">{topTask.project}</span> (
-                    {topTask.hours.toFixed(1)} h)
-                  </li>
-                )}
-              </ul>
-            );
-          })()}
+          <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">
+            {summaryText}
+          </p>
         </CardBody>
       </Card>
     </div>
