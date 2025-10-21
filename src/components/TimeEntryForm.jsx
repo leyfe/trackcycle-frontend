@@ -181,11 +181,28 @@ export default function TimeEntryForm({
             placeholder="Was habe ich gemacht?"
             allowsCustomValue
             inputValue={description}
+            selectedKey={description} // 🟢 wichtig für Keyboard-Auswahl
             onInputChange={(val) => {
               setDescription(val);
-              if (activeEntry) setActiveEntry({ ...activeEntry, description: val });
+              if (activeEntry)
+                setActiveEntry({ ...activeEntry, description: val });
             }}
-            selectedKey={null}
+            onSelectionChange={(key) => {
+              if (!key) return;
+              const item = suggestions.find((s) => s.description === key);
+              if (item) {
+                setDescription(item.description);
+                const project = projects.find((p) => p.id === item.projectId);
+                if (project) setSelectedProject(project.id);
+                if (activeEntry)
+                  setActiveEntry({
+                    ...activeEntry,
+                    description: item.description,
+                    projectId: project?.id || null,
+                    projectName: project?.name || "",
+                  });
+              }
+            }}
             classNames={{
               popoverContent: "ac-popover",
               listboxWrapper: "max-h-[60vh]",
@@ -195,17 +212,20 @@ export default function TimeEntryForm({
                 ? "bg-slate-800/70 w-full"
                 : "bg-slate-800 hover:bg-slate-700"
             } rounded-xl border border-slate-700`}
+            onKeyDown={(e) => {
+              // 🟡 Optional: Wenn kein Vorschlag aktiv ist, Enter = "bestätigen"
+              if (e.key === "Enter" && !suggestions.some((s) => s.description === description)) {
+                e.preventDefault();
+                // hier kannst du z. B. direkt den Timer starten oder Fokus wechseln
+              }
+            }}
           >
             {suggestions?.map((s, i) => {
               const project = projects.find((p) => p.id === s.projectId);
               return (
                 <AutocompleteItem
-                  key={`${s.description}-${s.projectId}-${i}`}
+                  key={s.description} // eindeutiger, damit Keyboard funktioniert
                   textValue={s.description}
-                  onPress={() => {
-                    setDescription(s.description);
-                    if (project) setSelectedProject(project.id);
-                  }}
                 >
                   <div className="flex flex-col">
                     <span>{s.description}</span>

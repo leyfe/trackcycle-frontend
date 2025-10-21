@@ -20,7 +20,25 @@ export default {
   },
   safelist: [
     {
-      pattern: /(border|shadow|bg|text)-(indigo|emerald|violet|rose)-(400|500|600)/,
+      pattern:
+        /(bg|text|border|ring|shadow|hover:bg|hover:text|hover:border|focus:bg|focus:text|focus:border)-(rose|orange|yellow|lime|emerald|sky|indigo|purple|fuchsia|slate)-(400|500|600|700)/,
+    },
+    // optional: Light + Dark Ringe separat
+    {
+      pattern:
+        /(ring-offset|ring)-(rose|orange|yellow|lime|emerald|sky|indigo|purple|fuchsia|slate)-(300|400|500)/,
+    },
+    // generate the selected-state variant
+    {
+      pattern:
+        /(bg|text|border|ring)-(rose|orange|yellow|lime|emerald|sky|indigo|purple|fuchsia|slate)-(400|500|600)/,
+      variants: ["group-data-[selected=true]"],
+    },
+    // generate the selected+hover chain
+    {
+      pattern:
+        /(bg|text|border|ring)-(rose|orange|yellow|lime|emerald|sky|indigo|purple|fuchsia|slate)-(400|500|600)/,
+      variants: ["group-data-[selected=true]:hover"],
     },
   ],
   plugins: [nextui()],

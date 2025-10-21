@@ -17,6 +17,31 @@ import useICalCalendar from "./hooks/useICalCalendar";
 import CalendarSuggestions from "./components/CalendarSuggestions";
 import AccentColorPicker from "./components/AccentColorPicker";
 
+// oben in SettingsPage.jsx (außerhalb der Komponente)
+const TRACK_SELECTED = {
+  indigo:
+    "group-data-[selected=true]:!bg-indigo-600 group-data-[selected=true]:hover:!bg-indigo-500",
+  emerald:
+    "group-data-[selected=true]:!bg-emerald-600 group-data-[selected=true]:hover:!bg-emerald-500",
+  violet:
+    "group-data-[selected=true]:!bg-violet-600 group-data-[selected=true]:hover:!bg-violet-500",
+  rose:
+    "group-data-[selected=true]:!bg-rose-600 group-data-[selected=true]:hover:!bg-rose-500",
+  orange:
+    "group-data-[selected=true]:!bg-orange-600 group-data-[selected=true]:hover:!bg-orange-500",
+  yellow:
+    "group-data-[selected=true]:!bg-yellow-500 group-data-[selected=true]:hover:!bg-yellow-400",
+  lime:
+    "group-data-[selected=true]:!bg-lime-600 group-data-[selected=true]:hover:!bg-lime-500",
+  sky:
+    "group-data-[selected=true]:!bg-sky-600 group-data-[selected=true]:hover:!bg-sky-500",
+  purple:
+    "group-data-[selected=true]:!bg-purple-600 group-data-[selected=true]:hover:!bg-purple-500",
+  fuchsia:
+    "group-data-[selected=true]:!bg-fuchsia-600 group-data-[selected=true]:hover:!bg-fuchsia-500",
+  slate:
+    "group-data-[selected=true]:!bg-slate-600 group-data-[selected=true]:hover:!bg-slate-500",
+};
 
 export default function SettingsPage({ entries, onSettingsChange, onBack }) {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -199,6 +224,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
               size="sm"
               color="primary"
               variant="flat"
+              className={`bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500`}
               onPress={() => {
                 setSettings((prev) => ({
                   ...prev,
@@ -231,13 +257,18 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
             </span>
             <Switch
               size="sm"
-              color={settings.accentColor || "primary"}
+              color="default"
               isSelected={settings.roundToQuarter}
               classNames={{
+                // this is the track
                 wrapper: `
-                  "group-data-[selected=true]:!bg-${settings.accentColor}-600 
-                  group-data-[selected=true]:hover:!bg-${settings.accentColor}-500",
-                `
+                  bg-slate-600
+                  ${TRACK_SELECTED[settings.accentColor || "indigo"]}
+                `,
+                // the knob
+                thumb: "bg-white shadow-md",
+                // optional: remove any base background
+                base: "bg-transparent",    
               }}
               onValueChange={(val) => {
                 setSettings((prev) => ({ ...prev, roundToQuarter: val }));
@@ -249,14 +280,19 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                 <span className="text-slate-300 text-sm">Favoriten anzeigen?</span>
                 <Switch
                   size="sm"
-                  color={settings.accentColor || "primary"}
+                  color="default"
                   isSelected={settings.showFavorites}
-                classNames={{
-                  wrapper: `
-                    "group-data-[selected=true]:!bg-${settings.accentColor}-600 
-                    group-data-[selected=true]:hover:!bg-${settings.accentColor}-500",
-                  `
-                }}
+                  classNames={{
+                    // this is the track
+                    wrapper: `
+                      bg-slate-600
+                      ${TRACK_SELECTED[settings.accentColor || "indigo"]}
+                    `,
+                    // the knob
+                    thumb: "bg-white shadow-md",
+                    // optional: remove any base background
+                    base: "bg-transparent",    
+                  }}
                   onValueChange={() => {
                     toggleSetting("showFavorites");
                     showToast("Einstellung gespeichert", "OK", null, 3000, "success");
@@ -339,7 +375,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
 
                   return (
                     <FavoriteItem
-                      key={favKey}
+                      key={`${favKey}-${index}`}
                       favKey={favKey}
                       t={t}
                       label={label}
@@ -355,9 +391,9 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                   {sortedTasks
                     .filter((t) => !settings.manualFavorites.includes(t.key))
                     .slice(0, 10) // 🔹 Nur die Top 10 anzeigen
-                    .map((t) => (
+                    .map((t, index) => (
                       <div
-                        key={t.key}
+                        key={`${t.key}-${index}`}
                         className="flex justify-between items-center bg-slate-800/40 px-4 py-2 rounded-lg border border-transparent hover:border-slate-700"
                       >
                         <div>
@@ -390,8 +426,8 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   fullWidth
+                  className={`bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500`}
                   color="secondary"
-                  variant="flat"
                   onPress={() => setShowProjects(true)}
                   startContent={<FolderCog className="w-4 h-4" />}
                 >
@@ -399,8 +435,8 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                 </Button>
                 <Button
                   fullWidth
+                  className={`bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500`}
                   color="secondary"
-                  variant="flat"
                   onPress={() => setShowCustomers(true)}
                   startContent={<Users className="w-4 h-4" />}
                 >
@@ -415,7 +451,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
             <CardBody className="space-y-4">
               <h2 className="text-lg font-semibold text-slate-100">💾 Datenverwaltung</h2>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button color="primary" onPress={handleExportAll}>
+                <Button className={`bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500`} color="primary" onPress={handleExportAll}>
                   Exportieren (alles als JSON)
                 </Button>
                 <Button variant="flat" onPress={handleExportCSV}>
@@ -430,7 +466,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                     className="hidden"
                     onChange={(e) => handleImport(e.target.files?.[0])}
                   />
-                  <Button color="secondary" as="span">
+                  <Button fullWidth color="secondary" as="span" className={`bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500`}>
                     Importieren
                   </Button>
                 </label>
@@ -452,13 +488,13 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
               <Input
                 label="ICS-Link"
                 placeholder="https://outlook.office365.com/owa/calendar/..."
-                value={icalUrl}
+                value={icalUrl || ""}
                 onChange={(e) => setIcalUrl(e.target.value)}
                 size="sm"
                 variant="flat"
               />
 
-              <Button color="primary" onPress={() => refetch()}>
+              <Button color="primary" onPress={() => refetch()} className={`bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500`}>
                 Kalender laden
               </Button>
 
