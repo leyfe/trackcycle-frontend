@@ -1,14 +1,17 @@
-import React, { useState, useContext } from "react";
-import { Button, Input, Select, SelectItem, Card, CardBody } from "@nextui-org/react";
+import React, { useState, useContext, useRef } from "react";
+import { Button, Autocomplete, AutocompleteItem, AutocompleteSection, Input, Select, SelectItem, Card, CardBody } from "@nextui-org/react";
 import { ProjectContext } from "../context/ProjectContext"; // falls du den Context nutzt
+import { CustomerContext } from "../context/CustomerContext";
 
-export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntry, onConvertToPause }) {
+export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntry, onConvertToPause, suggestions = [] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeGap, setActiveGap] = useState(null);
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState("");
-
+  const suggestionRef = useRef(null); // 👈 HIER hinzufügen!
+  
   const { projects } = useContext(ProjectContext) || { projects: [] };
+  const { customers } = useContext(CustomerContext);
 
   const isIncomplete = totalHours < 8;
   const remaining = 8 - totalHours;
@@ -39,6 +42,12 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
     nonBillableHours > 2 || nonBillableRatio > 0.5;
 
   if (gaps.length === 0 && !isIncomplete) return null;
+  
+  // 📂 Projekte gruppieren
+  const grouped = customers.map((cust) => ({
+    customer: cust.name,
+    projects: projects.filter((p) => p.client === cust.name),
+  }));
 
   const handleAddGapEntry = () => {
     if (!activeGap || !description || !projectId) return;
@@ -126,41 +135,86 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
 
             {/* Inline-Form */}
             {activeGap && (
-              <Card className="bg-slate-900/70 border border-slate-700 mt-2">
-                <CardBody className="space-y-3">
-                  <div className="text-xs text-slate-400">
-                    Neue Buchung:{" "}
-                    {activeGap.from.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{" "}
-                    –{" "}
-                    {activeGap.to.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              <Card className="bg-slate-800/80 border border-slate-700/70 shadow-lg mt-3 backdrop-blur-sm">
+                <CardBody className="space-y-4">
+                  <div className="flex justify-between items-center text-sm text-slate-400">
+                    <span>Neue Buchung:</span>
+                    <span className="font-medium text-slate-200">
+                      {activeGap.from.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} – 
+                      {activeGap.to.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
                   </div>
-                  
-                  <Input
-                    size="sm"
-                    placeholder="Beschreibung"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    classNames={{
-                      input: "text-slate-200 text-sm",
-                      inputWrapper: "bg-slate-800 border-slate-700",
-                    }}
-                  />
 
-                  <Select
-                    placeholder="Projekt auswählen"
-                    selectedKeys={projectId ? [projectId] : []}
-                    onChange={(e) => setProjectId(e.target.value)}
-                    classNames={{
-                      trigger: "bg-slate-800 text-slate-200 border border-slate-700",
-                      popoverContent: "bg-slate-800",
-                    }}
-                  >
-                    {projects.map((p) => (
-                      <SelectItem key={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </Select>
+                  {/* 🔹 Autocomplete für Beschreibung */}
+                  <Autocomplete
+                          ref={suggestionRef}
+                          size="lg"
+                          placeholder="Was habe ich gemacht?"
+                          allowsCustomValue
+                          inputValue={description}
+                          onInputChange={(val) => {
+                            setDescription(val);
+                          }}
+                          selectedKey={null}
+                          classNames={{
+                            popoverContent: "ac-popover",   // <— eigene Klasse am Popover
+                            // (falls deine NextUI-Version es supportet, zusätzlich:)
+                            listboxWrapper: "max-h-[70vh]"  // harmless fallback
+                          }}
+                          className={`transition-all duration-200 ${
+                            "opacity-100 bg-slate-800 hover:bg-slate-700"
+                          } rounded-xl border border-slate-700`}
+                        >
+                          {suggestions?.map((s, i) => {
+                            const project = projects.find((p) => p.id === s.projectId);
+                            return (
+                              <AutocompleteItem
+                                key={`${s.description}-${s.projectId}-${i}`}
+                                textValue={s.description}
+                                onPress={() => {
+                                  setDescription(s.description);
+                                  if (project) setSelectedProject(project.id);
+                                }}
+                              >
+                                <div className="flex flex-col">
+                                  <span>{s.description}</span>
+                                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                                    {project?.name || "Projekt unbekannt"}
+                                  </span>
+                                </div>
+                              </AutocompleteItem>
+                            );
+                          })}
+                        </Autocomplete>
 
-                  <div className="flex gap-2 justify-end">
+      {/* Projekt-Auswahl */}
+      <Autocomplete
+        placeholder="Projekt auswählen..."
+        variant="flat"
+        size="lg"
+        onSelectionChange={(key) => {
+          if (!key) return;
+          const newProjectId = typeof key === "string" ? key : [...key][0];
+          const newProject = projects.find((p) => p.id === newProjectId);
+        }}
+        className={`transition-all duration-200 text-slate-950 ${
+            "opacity-100 bg-slate-800 hover:bg-slate-700"
+        } rounded-xl border border-slate-700`}
+      >
+        {grouped.map(
+          (group) =>
+            group.projects.length > 0 && (
+              <AutocompleteSection key={group.customer} title={group.customer}>
+                {group.projects.map((p) => (
+                  <AutocompleteItem key={p.id.toString()}>{p.name}</AutocompleteItem>
+                ))}
+              </AutocompleteSection>
+            )
+        )}
+      </Autocomplete>
+
+                  {/* 🔹 Aktionen */}
+                  <div className="flex justify-end gap-2 pt-2">
                     <Button
                       size="sm"
                       variant="flat"

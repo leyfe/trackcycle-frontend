@@ -14,6 +14,7 @@ export default function EntryList({
   onAdd,
   settings,
   onConvertToPause,
+  suggestions
 }) {
   const [collapsedTasks, setCollapsedTasks] = useState({});
   const [visibleDays, setVisibleDays] = useState(7);
@@ -207,6 +208,7 @@ export default function EntryList({
               dayEntries={entriesForDay} 
               onAddGapEntry={(entry) => onAdd(entry)}
               onConvertToPause={onConvertToPause}
+              suggestions={suggestions}
             />
 
             {Object.entries(grouped)

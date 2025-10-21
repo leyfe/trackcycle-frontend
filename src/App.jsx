@@ -197,6 +197,7 @@ export default function App() {
               onRestart={handleRestart}
               onAdd={handleAdd}
               onConvertToPause={handleConvertToPause}
+              suggestions={suggestions}
             />
           </>
         )}
