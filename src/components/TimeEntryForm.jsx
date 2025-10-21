@@ -190,18 +190,41 @@ export default function TimeEntryForm({
             onSelectionChange={(key) => {
               if (!key) return;
               const item = suggestions.find((s) => s.description === key);
-              if (item) {
-                setDescription(item.description);
-                const project = projects.find((p) => p.id === item.projectId);
-                if (project) setSelectedProject(project.id);
-                if (activeEntry)
-                  setActiveEntry({
-                    ...activeEntry,
-                    description: item.description,
-                    projectId: project?.id || null,
-                    projectName: project?.name || "",
-                  });
+              if (!item) return;
+
+              const project = projects.find((p) => p.id === item.projectId);
+              const projectId = project?.id || item.projectId;
+
+              // Beschreibung + Projekt übernehmen
+              setDescription(item.description);
+              setSelectedProject(projectId);
+
+              // Optional: Wenn bereits ein aktiver Timer läuft, erst stoppen
+              if (activeEntry) {
+                const end = new Date().toISOString();
+                const duration =
+                  (new Date(end) - new Date(activeEntry.start)) / 1000 / 60 / 60;
+                const completed = {
+                  ...activeEntry,
+                  end,
+                  duration: duration.toFixed(2),
+                };
+                onAdd(completed);
               }
+
+              // 🟢 Sofort neuen Timer starten
+              const startIso = new Date().toISOString();
+              const newEntry = {
+                id: Date.now(),
+                projectId,
+                projectName: project?.name || "Unbekannt",
+                description: item.description,
+                start: startIso,
+                end: null,
+              };
+
+              setActiveEntry(newEntry);
+              setElapsed(0);
             }}
             classNames={{
               popoverContent: "ac-popover",
