@@ -76,75 +76,75 @@ export function exportEntriesCSV() {
 ──────────────────────────────────────────────── */
 
 // 🔧 In src/utils/exportData.js
-export function exportEntriesConaktiv({ mode = "day", startDate, endDate }) {
-  const entries   = JSON.parse(localStorage.getItem("timetracko.entries")   || "[]");
-  const projects  = JSON.parse(localStorage.getItem("timetracko.projects")  || "[]");
+export function exportEntriesConaktiv({ mode = "day", startDate, endDate } = {}) {
+  const entries = JSON.parse(localStorage.getItem("timetracko.entries") || "[]");
+  const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
   const customers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
+  const settings = JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
 
-  const projById = Object.fromEntries(projects.map(p => [p.id, p]));
-  const custByName = Object.fromEntries(customers.map(c => [c.name, c]));
+  const projById = Object.fromEntries(projects.map((p) => [p.id, p]));
+  const custById = Object.fromEntries(customers.map((c) => [c.id, c]));
 
-  // 🧠 Helfer: Nur Datum (ohne Zeit) vergleichen
-  const normalizeDate = (isoString) => new Date(isoString).toISOString().split("T")[0];
+  // 🕒 15-Minuten-Rundung aktiv?
+  const roundToQuarter = settings.roundToQuarter ?? false;
 
-  const today = new Date().toISOString().split("T")[0];
+  const roundMinutes = (hours) => {
+    const minutes = hours * 60;
+    return roundToQuarter ? Math.ceil(minutes / 15) * 15 / 60 : hours;
+  };
 
-  // 🗓️ Filter Logik
-  let filtered = entries.filter(e => e.end && e.start);
+  // 📅 Filter Zeitraum
+  const filterFn = (e) => {
+    const d = new Date(e.start);
+    if (mode === "day") {
+      const dayISO = startDate.split("T")[0];
+      return d.toISOString().startsWith(dayISO);
+    }
+    if (mode === "week") {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      return d >= start && d <= end;
+    }
+    return true; // alles
+  };
 
-  if (mode === "day" && startDate) {
-    filtered = filtered.filter(e => normalizeDate(e.start) === startDate);
-  }
+  const filtered = entries.filter(filterFn);
 
-  if (mode === "week" && startDate && endDate) {
-    filtered = filtered.filter(e => {
-      const d = normalizeDate(e.start);
-      return d >= startDate && d <= endDate;
-    });
-  }
-
-  // 🧩 Gruppieren nach (Datum + Projekt + Beschreibung)
+  // 🧩 Gruppierte Tasks (Projekt + Beschreibung)
   const grouped = {};
   for (const e of filtered) {
-    const key = `${normalizeDate(e.start)}::${e.projectId}::${e.description}`;
-    if (!grouped[key]) {
-      grouped[key] = {
-        date: normalizeDate(e.start).split("-").reverse().join("."), // → 20.10.2025
-        hours: 0,
-        customer: "",
-        project: "",
-        description: e.description || "",
-      };
-    }
-
-    grouped[key].hours += parseFloat(e.duration || 0);
-    const proj = projById[e.projectId];
-    if (proj) {
-      grouped[key].project = proj.name || proj.id;
-      grouped[key].customer = proj.client
-        ? custByName[proj.client]?.number || proj.client
-        : "";
-    }
+    const key = `${e.projectId || ""}__${e.description || ""}`;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(e);
   }
 
-  // 📦 Format für ConAktiv
-  const result = Object.values(grouped).map(g => ({
-    date: g.date,
-    hours: g.hours.toFixed(2).replace(".", ","),
-    customer: g.customer || "",
-    project: g.project || "",
-    description: g.description || "",
-  }));
+  const exportData = Object.entries(grouped).map(([key, list]) => {
+    const first = list[0];
+    const totalHours = roundMinutes(
+      list.reduce((sum, e) => sum + (parseFloat(e.duration) || 0), 0)
+    );
 
-  // 🪣 Download JSON-Datei
-  const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+    const project = projById[first.projectId];
+    const customer = custById[project?.customerId];
+
+    return {
+      date: new Date(first.start).toLocaleDateString("de-DE"),
+      hours: totalHours.toFixed(2).replace(".", ","),
+      customer: customer?.name || project?.client || "Unbekannt",
+      project: project?.name || first.projectName || "Unbekannt",
+      description: first.description || "",
+    };
+  });
+
+  // 💾 Export-Datei erstellen
+  const pretty = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([pretty], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const filename = `ConAktiv_Export_${mode}_${today}.json`;
   a.href = url;
-  a.download = filename;
+  a.download = `ConAktiv_Export_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 
-  console.log(`📤 Export (${mode}) abgeschlossen → ${filename}`, result);
+  return exportData;
 }

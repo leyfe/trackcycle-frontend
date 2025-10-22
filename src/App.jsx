@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useCallback } from "react";
+import React, { useState, useContext, useEffect, useCallback, useRef } from "react";
 import TimeEntryForm from "./components/TimeEntryForm";
 import EntryList from "./components/EntryList";
 import FavoritesBar from "./components/FavoritesBar";
@@ -31,6 +31,8 @@ export default function App() {
       accentColor: "indigo",
     }
   );
+  
+  const skipNextReset = useRef(false);
 
   const { projects } = useContext(ProjectContext);
   const { showToast } = useToast();
