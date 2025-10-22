@@ -144,6 +144,7 @@ export default function App() {
     };
 
     // 🧠 Nur aktiv setzen – noch NICHT speichern!
+    skipNextReset.current = true;
     setActiveEntry(restarted);
 
     showToast(

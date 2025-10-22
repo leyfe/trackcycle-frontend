@@ -51,15 +51,13 @@ export default function TimeEntryForm({
 
   /* ───────────── Sticky Verhalten ───────────── */
   useEffect(() => {
-    const handleScroll = () => {
-      if (!formRef.current) return;
-      const rect = formRef.current.getBoundingClientRect();
-      // sticky erst, wenn der untere Rand (z.B. Button-Ende) oben angekommen ist
-      setIsSticky(rect.bottom <= 0);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // initial prüfen
-    return () => window.removeEventListener("scroll", handleScroll);
+    if (!formRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsSticky(!entry.isIntersecting),
+      { threshold: 1.0 }
+    );
+    observer.observe(formRef.current);
+    return () => observer.disconnect();
   }, []);
 
   /* ───────────── Timer ───────────── */
@@ -155,11 +153,11 @@ export default function TimeEntryForm({
 
       <div
         ref={barRef}
-        className={`transition-all duration-100 ${
-          isSticky
-            ? "fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-slate-700/50 to-slate-800 border-b border-slate-700 backdrop-blur-md shadow-lg px-4 py-4"
+        className={`transition-[background-color,box-shadow,padding] duration-300 ease-out
+          ${isSticky
+            ? "fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-slate-700/50 to-slate-800 border-b border-slate-700 backdrop-blur-md shadow-lg px-4 py-3"
             : "bg-gradient-to-b from-slate-700/50 to-slate-800 border border-slate-200/10 rounded-2xl shadow-2xl p-8 mb-6"
-        }`}
+          } max-w-screen`}
       >
         {/* Titel */}
         {!isSticky && (
@@ -181,7 +179,8 @@ export default function TimeEntryForm({
             placeholder="Was habe ich gemacht?"
             allowsCustomValue
             inputValue={description}
-            selectedKey={description} // 🟢 wichtig für Keyboard-Auswahl
+            selectedKey={description}
+            aria-label="Beschreibung hinzufügen"
             onInputChange={(val) => {
               setDescription(val);
               if (activeEntry)
@@ -266,6 +265,7 @@ export default function TimeEntryForm({
             placeholder="Projekt auswählen..."
             size={isSticky ? "md" : "lg"}
             selectedKey={selectedProject?.toString()}
+            aria-label="Projekt auswählen"
             onSelectionChange={(key) => {
               if (!key) return;
               const newProjectId = typeof key === "string" ? key : [...key][0];
