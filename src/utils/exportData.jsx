@@ -69,3 +69,82 @@ export function exportEntriesCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/* ────────────────────────────────────────────────
+   📦 ConAktiv-kompatibler Export
+   Gruppiert gleiche Tasks pro Tag (oder optional Woche)
+──────────────────────────────────────────────── */
+
+// 🔧 In src/utils/exportData.js
+export function exportEntriesConaktiv({ mode = "day", startDate, endDate }) {
+  const entries   = JSON.parse(localStorage.getItem("timetracko.entries")   || "[]");
+  const projects  = JSON.parse(localStorage.getItem("timetracko.projects")  || "[]");
+  const customers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
+
+  const projById = Object.fromEntries(projects.map(p => [p.id, p]));
+  const custByName = Object.fromEntries(customers.map(c => [c.name, c]));
+
+  // 🧠 Helfer: Nur Datum (ohne Zeit) vergleichen
+  const normalizeDate = (isoString) => new Date(isoString).toISOString().split("T")[0];
+
+  const today = new Date().toISOString().split("T")[0];
+
+  // 🗓️ Filter Logik
+  let filtered = entries.filter(e => e.end && e.start);
+
+  if (mode === "day" && startDate) {
+    filtered = filtered.filter(e => normalizeDate(e.start) === startDate);
+  }
+
+  if (mode === "week" && startDate && endDate) {
+    filtered = filtered.filter(e => {
+      const d = normalizeDate(e.start);
+      return d >= startDate && d <= endDate;
+    });
+  }
+
+  // 🧩 Gruppieren nach (Datum + Projekt + Beschreibung)
+  const grouped = {};
+  for (const e of filtered) {
+    const key = `${normalizeDate(e.start)}::${e.projectId}::${e.description}`;
+    if (!grouped[key]) {
+      grouped[key] = {
+        date: normalizeDate(e.start).split("-").reverse().join("."), // → 20.10.2025
+        hours: 0,
+        customer: "",
+        project: "",
+        description: e.description || "",
+      };
+    }
+
+    grouped[key].hours += parseFloat(e.duration || 0);
+    const proj = projById[e.projectId];
+    if (proj) {
+      grouped[key].project = proj.name || proj.id;
+      grouped[key].customer = proj.client
+        ? custByName[proj.client]?.number || proj.client
+        : "";
+    }
+  }
+
+  // 📦 Format für ConAktiv
+  const result = Object.values(grouped).map(g => ({
+    date: g.date,
+    hours: g.hours.toFixed(2).replace(".", ","),
+    customer: g.customer || "",
+    project: g.project || "",
+    description: g.description || "",
+  }));
+
+  // 🪣 Download JSON-Datei
+  const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const filename = `ConAktiv_Export_${mode}_${today}.json`;
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  console.log(`📤 Export (${mode}) abgeschlossen → ${filename}`, result);
+}

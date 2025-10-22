@@ -9,7 +9,8 @@ import {
 import { Upload, Download, FolderCog, Users, Edit3, Trash2, Save } from "lucide-react";
 import ProjectModal from "./components/ProjectModal";
 import CustomerModal from "./components/CustomerModal";
-import { exportAllData, exportEntriesCSV } from "./utils/exportData";
+import ConaktivExportModal from "./components/ConaktivExportModal";
+import { exportAllData, exportEntriesCSV, exportEntriesConaktiv } from "./utils/exportData";
 import { importAllData } from "./utils/importData";
 import PageHeader from "./components/PageHeader";
 import { useToast } from "./components/Toast";
@@ -54,6 +55,8 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
 
   const [showProjects, setShowProjects] = useState(false);
   const [showCustomers, setShowCustomers] = useState(false);
+  const [showConaktivExport, setShowConaktivExport] = useState(false);
+
   const { showToast } = useToast();
   // 📆 Outlook Kalender State
   const [icalUrl, setIcalUrl] = useState(localStorage.getItem("ical.url") || "");
@@ -457,6 +460,13 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
                 <Button variant="flat" onPress={handleExportCSV}>
                   Nur Zeiteinträge (CSV)
                 </Button>
+                <Button
+                  className={`bg-${settings.accentColor}-600 hover:bg-${settings.accentColor}-500`} 
+                  color="primary"
+                  onPress={() => setShowConaktivExport(true)}   // 🟢 vorher: setIsOpen(true)
+                >
+                  📤 Export for ConAktiv
+                </Button>
 
                 <label htmlFor="import-file" className="cursor-pointer">
                   <input
@@ -529,6 +539,10 @@ export default function SettingsPage({ entries, onSettingsChange, onBack }) {
           )}
           {showCustomers && (
             <CustomerModal isOpen={showCustomers} onClose={() => setShowCustomers(false)} />
+          )}
+          {/* 🔻 Modal separat als Component */}
+          {showConaktivExport && (
+            <ConaktivExportModal isOpen={showConaktivExport} onClose={() => setShowConaktivExport(false)} />
           )}
         </div>
       </div>

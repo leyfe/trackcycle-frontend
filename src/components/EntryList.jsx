@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@nextui-org/react";
-import { Trash2, Edit, RotateCw } from "lucide-react";
+import { Trash2, Edit, RotateCw, Download } from "lucide-react";
 import { useToast } from "./Toast";
 import DayOverview from "./DayOverview";
+import { exportEntriesConaktiv } from "../utils/exportData";
 
 /* ----------------------------- EntryList ----------------------------- */
 export default function EntryList({
@@ -192,11 +193,37 @@ export default function EntryList({
 
         return (
           <div key={date}>
-            {/* 🧾 Tagesüberschrift */}
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="ml-4 text-slate-400 text-xs font-semibold">
-                {dayLabel}
-              </h3>
+            {/* 🧾 Tagesüberschrift mit Download */}
+            <div className="flex justify-between items-center mb-3 group">
+              <div className="flex items-center gap-2 ml-4">
+                <h3 className="text-slate-400 text-xs font-semibold">{dayLabel}</h3>
+
+                {/* 📥 Download-Icon (nur bei Hover sichtbar) */}
+                <button
+                  onClick={() => {
+                    // 🔹 Konvertiere das deutsche Datum (z. B. "20.10.2025") zu ISO
+                    const [d, m, y] = date.match(/(\d{2})\.(\d{2})\.(\d{4})/).slice(1);
+                    const isoDate = `${y}-${m}-${d}`;
+
+                    try {
+                      exportEntriesConaktiv({ mode: "day", startDate: isoDate });
+                      showToast("Tagesexport erstellt", "OK", null, 3000, "success");
+                    } catch (err) {
+                      console.error("Export-Fehler:", err);
+                      showToast("Fehler beim Export", "OK", null, 3000, "error");
+                    }
+                  }}
+                  title="Tagesexport für ConAktiv"
+                  className="
+                    opacity-0 group-hover:opacity-100 
+                    transition-opacity duration-300
+                    text-slate-500 hover:text-indigo-400
+                  "
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+
               <div className="mr-4 text-xs text-slate-400 flex items-center gap-2">
                 <span>{formatTotalTime(dayRoundedTotal)} h</span>
               </div>
