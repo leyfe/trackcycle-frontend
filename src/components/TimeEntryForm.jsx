@@ -84,11 +84,17 @@ export default function TimeEntryForm({
     }
   }, [activeEntry]);
 
-  /* ───────────── Projekte gruppieren ───────────── */
+  /* ───────────── Projekte gruppieren (nach customerId) ───────────── */
   const grouped = customers.map((cust) => ({
     customer: cust.name,
-    projects: projects.filter((p) => p.client === cust.name),
+    projects: projects.filter((p) => p.customerId === cust.id),
   }));
+
+  // Optional: Projekte ohne Kunden
+  const unassigned = projects.filter((p) => !p.customerId);
+  if (unassigned.length > 0) {
+    grouped.push({ customer: "Ohne Kunden", projects: unassigned });
+  }
 
   /* ───────────── Timer Start/Stop ───────────── */
   const startTimer = () => {
