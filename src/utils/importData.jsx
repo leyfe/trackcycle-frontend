@@ -1,17 +1,30 @@
 // src/utils/importData.js
-export function importAllData(file, onComplete) {
+export function importAllData(file, onSuccess) {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
-      if (data.entries)   localStorage.setItem("timetracko.entries",   JSON.stringify(data.entries));
-      if (data.projects)  localStorage.setItem("timetracko.projects",  JSON.stringify(data.projects));
-      if (data.customers) localStorage.setItem("timetracko.customers", JSON.stringify(data.customers));
-      if (data.settings)  localStorage.setItem("timetracko.settings",  JSON.stringify(data.settings));
-      onComplete?.(data);
+      const projects = data.projects || [];
+      const customers = data.customers || [];
+
+      // 🧹 Einträge bereinigen
+      const cleanedEntries = (data.entries || []).map((entry) => {
+        const project = projects.find(p => p.id === entry.projectId);
+        return {
+          ...entry,
+          projectName: undefined,
+          projectId: project?.id || entry.projectId || null,
+        };
+      });
+
+      localStorage.setItem("timetracko.entries", JSON.stringify(cleanedEntries));
+      localStorage.setItem("timetracko.projects", JSON.stringify(projects));
+      localStorage.setItem("timetracko.customers", JSON.stringify(customers));
+      localStorage.setItem("timetracko.settings", JSON.stringify(data.settings || {}));
+
+      onSuccess?.();
     } catch (err) {
-      console.error("Import-Fehler:", err);
-      alert("❌ Import fehlgeschlagen. Datei prüfen.");
+      console.error("❌ Import-Fehler:", err);
     }
   };
   reader.readAsText(file);

@@ -21,7 +21,14 @@ export default function EntryList({
   const [visibleDays, setVisibleDays] = useState(7);
   const [hasMore, setHasMore] = useState(false);
   const { showToast } = useToast();
+    
+  // 🧩 Lade Projekt- und Kundendaten aus localStorage
+  const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+  const customers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
 
+  // 🗺 Mapping-Objekte für schnellen Zugriff
+  const projById = Object.fromEntries(projects.map(p => [p.id, p]));
+  const custById = Object.fromEntries(customers.map(c => [c.id, c]));
   const roundEnabled = settings?.roundToQuarter ?? false;
 
   if (!entries.length)
@@ -34,14 +41,15 @@ export default function EntryList({
   const roundToQuarter = (minutes) => Math.ceil(minutes / 15) * 15;
 
   // 🧠 Helper: Pausen-Erkennung
-  const isPauseEntry = (entry) =>
-    entry.projectId === "PAUSE" || entry.projectName?.toLowerCase() === "pause";
+  const isPauseEntry = (entry) => entry.projectId === "PAUSE";
 
   const getRoundedDurationsByTask = (dayEntries) => {
     const grouped = {};
     dayEntries.forEach((e) => {
-      if (!e.projectName && !e.description) return;
-      const key = `${e.projectName || ""}__${e.description || ""}`;
+      const project = projById[e.projectId];
+      const projectName = project?.name || "";
+      if (!projectName && !e.description) return;
+      const key = `${projectName}__${e.description || ""}`;
       const dur = (parseFloat(e.duration) || 0) * 60;
       grouped[key] = (grouped[key] || 0) + dur;
     });
@@ -81,8 +89,9 @@ export default function EntryList({
   const groupTasks = (dayEntries) => {
     const map = {};
     for (const e of dayEntries) {
-      const key = `${e.projectName}-${e.description}`;
-      if (!map[key]) map[key] = [];
+      const project = projById[e.projectId];
+      const projectName = project?.name || "Unbekannt";
+      const key = `${projectName}-${e.description}`;      if (!map[key]) map[key] = [];
       map[key].push(e);
     }
     Object.values(map).forEach((list) =>
@@ -150,10 +159,14 @@ export default function EntryList({
         // 🔹 Arbeitszeit-Summe
         const roundedTasks = roundEnabled
           ? getRoundedDurationsByTask(workingEntries)
-          : workingEntries.map((e) => ({
-              key: `${e.projectName || ""}__${e.description || ""}`,
+          : workingEntries.map((e) => {
+            const project = projById[e.projectId];
+            const projectName = project?.name || "";
+            return {
+              key: `${projectName}__${e.description || ""}`,
               totalHours: parseFloat(e.duration || 0),
-            }));
+            };
+          });
         const dayRoundedTotal = roundedTasks.reduce(
           (sum, t) => sum + t.totalHours,
           0
@@ -257,7 +270,9 @@ export default function EntryList({
                       0
                     );
 
-                const { projectName, description } = list[0];
+                const description = list[0].description;
+                const project = projById[list[0].projectId];
+                const projectName = project?.name || "Unbekannt";
                 const collapsed = collapsedTasks[key] ?? true;
                 const toggle = () =>
                   setCollapsedTasks((prev) => ({
