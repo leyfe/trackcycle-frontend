@@ -82,9 +82,12 @@ export function exportEntriesConaktiv({ mode = "day", startDate, endDate } = {})
   const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
   const customers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
   const settings = JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
+  const activities = projects.flatMap(p =>(p.activities || []).map(a => ({ ...a, projectId: p.id }))  );
 
   const projById = Object.fromEntries(projects.map((p) => [p.id, p]));
   const custById = Object.fromEntries(customers.map(c => [c.id, c]));
+  const activityById = Object.fromEntries(activities.map(a => [a.id, a]));
+
 
   // 🕒 15-Minuten-Rundung aktiv?
   const roundToQuarter = settings.roundToQuarter ?? false;
@@ -127,12 +130,14 @@ export function exportEntriesConaktiv({ mode = "day", startDate, endDate } = {})
 
     const project = projById[first.projectId];
     const customer = custById[project?.customerId];
+    const activity = activityById[first.activityId];
 
     return {
       date: new Date(first.start).toLocaleDateString("de-DE"),
       hours: totalHours.toFixed(2).replace(".", ","),
       customer: customer?.name || project?.client || "Unbekannt",
-      project: project?.name || first.projectName || "Unbekannt",
+      project: project?.id || first.projectName || "Unbekannt",
+      activity: activityById[first.activityId]?.label || "Unbekannt",
       description: first.description || "",
     };
   });
