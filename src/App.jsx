@@ -3,7 +3,10 @@ import TimeEntryForm from "./components/TimeEntryForm";
 import EntryList from "./components/EntryList";
 import FavoritesBar from "./components/FavoritesBar";
 import StatsPage from "./StatsPage";
-import SettingsPage from "./SettingsPage";
+import SettingsPage from "./pages/SettingsPage";
+import SettingsCustomers from "./pages/SettingsCustomers";
+import SettingsProjects from "./pages/SettingsProjects";
+import SettingsFavorites from "./pages/SettingsFavorites";
 import BottomNav from "./components/BottomNav";
 import { ProjectContext } from "./context/ProjectContext";
 import { useToast } from "./components/Toast";
@@ -29,11 +32,11 @@ export default function App() {
       customLabels: {},
       roundToQuarter: false,
       accentColor: "indigo",
+      workdays: ["mon", "tue", "wed", "thu", "fri"],
     }
   );
-  
-  const skipNextReset = useRef(false);
 
+  const skipNextReset = useRef(false);
   const { projects } = useContext(ProjectContext);
   const { showToast } = useToast();
   const suggestions = useSuggestions(entries);
@@ -60,7 +63,7 @@ export default function App() {
     []
   );
 
-  // ➕ "Fehlende Buchung" hinzufügen
+  // ➕ Manuell hinzufügen
   const handleAdd = (newEntry) => {
     setEntries((prev) => writeSorted([...prev, newEntry]));
   };
@@ -88,14 +91,14 @@ export default function App() {
         prev.map((e) =>
           e.id === updatedTask.id
             ? {
-                ...updatedTask,
-                duration: (
-                  (new Date(updatedTask.end) - new Date(updatedTask.start)) /
-                  1000 /
-                  60 /
-                  60
-                ).toFixed(2),
-              }
+              ...updatedTask,
+              duration: (
+                (new Date(updatedTask.end) - new Date(updatedTask.start)) /
+                1000 /
+                60 /
+                60
+              ).toFixed(2),
+            }
             : e
         )
       )
@@ -104,21 +107,13 @@ export default function App() {
 
   // 🗑️ Eintrag löschen + Undo
   const handleDeleteEntry = (id) => {
-    // 1️⃣ Schritt: Lokale Referenz merken
     const deletedEntry = entries.find((e) => e.id === id);
     if (!deletedEntry) return;
-
-    // 2️⃣ Schritt: State direkt aktualisieren
     setEntries((prev) => writeSorted(prev.filter((e) => e.id !== id)));
-
-    // 3️⃣ Schritt: Toast außerhalb des State-Updaters
     showToast(
       "Eintrag gelöscht",
       "Rückgängig",
-      () => {
-        // ✅ Undo innerhalb eines neuen State-Updates
-        setEntries((prev2) => writeSorted([deletedEntry, ...prev2]));
-      },
+      () => setEntries((prev2) => writeSorted([deletedEntry, ...prev2])),
       4000
     );
   };
@@ -129,7 +124,6 @@ export default function App() {
       showToast("Es läuft bereits ein Timer!", "OK", null, 3000, "warning");
       return;
     }
-
     if (!entry.projectId) {
       showToast("Dieses Favorit-Element hat kein Projekt zugewiesen", "OK", null, 3000, "error");
       return;
@@ -145,25 +139,20 @@ export default function App() {
       duration: 0,
     };
 
-    // 🧠 Nur aktiv setzen – noch NICHT speichern!
     skipNextReset.current = true;
     setActiveEntry(restarted);
-
-    showToast(
-      `⏱ Timer gestartet für ${entry.projectName}`,
-      "OK",
-      null,
-      3000,
-      "success"
-    );
+    showToast(`⏱ Timer gestartet für ${entry.projectName}`, "OK", null, 3000, "success");
   };
 
-  // 🧱 App Layout
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white pb-24">
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
+  // ----------------------------------------------------
+  // 📄 Seitenlogik: normales Layout vs. Unterseiten
+  // ----------------------------------------------------
+  let content;
 
-        {/* 🏠 Hauptseite */}
+  if (["home", "stats", "settings"].includes(activeTab)) {
+    // 🔹 Normales Layout (mit Formular, Favoriten, Liste, etc.)
+    content = (
+      <>
         {activeTab === "home" && (
           <>
             <TimeEntryForm
@@ -205,7 +194,6 @@ export default function App() {
           </>
         )}
 
-        {/* 📊 Statistiken */}
         {activeTab === "stats" && (
           <StatsPage
             entries={entries}
@@ -214,14 +202,49 @@ export default function App() {
           />
         )}
 
-        {/* ⚙️ Einstellungen */}
         {activeTab === "settings" && (
           <SettingsPage
             entries={entries}
             onSettingsChange={handleSettingsChange}
             onBack={() => setActiveTab("home")}
+            onNavigate={setActiveTab}
           />
         )}
+      </>
+    );
+  } else if (activeTab === "settings-projects") {
+    // 🔹 Separate Seite: Projekte
+    content = <SettingsProjects onBack={() => setActiveTab("settings")} settings={settings} />;
+  } else if (activeTab === "settings-customers") {
+    // 🔹 Separate Seite: Kunden
+    content = <SettingsCustomers onBack={() => setActiveTab("settings")} settings={settings} />;
+  } else if (activeTab === "settings-favorites") {
+    // 🔹 Separate Seite: favoriten
+    content =  <SettingsFavorites 
+                entries={entries} 
+                onBack={() => setActiveTab("settings")} 
+                settings={settings} 
+                onSettingsChange={handleSettingsChange}
+                />;
+  } else {
+    // Fallback
+    content = (
+      <EntryList
+        entries={entries}
+        settings={settings}
+        onRestart={handleRestart}
+        onDelete={handleDeleteEntry}
+      />
+    );
+  }
+
+  // ----------------------------------------------------
+  // 🧱 App Layout
+  // ----------------------------------------------------
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white pb-24">
+      <div className="max-w-3xl mx-auto p-6 space-y-6">
+        {content}
       </div>
 
       {/* ✏️ Bearbeitungsmodal */}
@@ -233,7 +256,7 @@ export default function App() {
         projects={projects}
       />
 
-      {/* 🔻 Navigation */}
+      {/* 🔻 Bottom Navigation */}
       <BottomNav activeTab={activeTab} onChange={setActiveTab} settings={settings} />
     </div>
   );

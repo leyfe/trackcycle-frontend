@@ -9,6 +9,8 @@ import {
   AutocompleteItem,
   AutocompleteSection,
   Button,
+  Select,
+  SelectItem,
   Input
 } from "@nextui-org/react";
 import { ProjectContext } from "../context/ProjectContext";
@@ -24,12 +26,17 @@ export default function TimeEntryForm({
   settings,
 }) {
   const { projects } = useContext(ProjectContext);
+  const visibleProjects = projects.filter(p => !p.hidden);
   const { customers } = useContext(CustomerContext);
 
-  const [selectedProject, setSelectedProject] = useState("");
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedActivityId, setSelectedActivityId] = useState("");  
   const [description, setDescription] = useState("");
   const suggestionRef = useRef(null);
   const [showTimeInput, setShowTimeInput] = useState(false);
+  const [showActivitySelect, setShowActivitySelect] = useState(false);
+
   const [customStartTime, setCustomStartTime] = useState(
     new Date().toISOString().slice(0, 16)
   );
@@ -39,6 +46,9 @@ export default function TimeEntryForm({
 
   const [barHeight, setBarHeight] = useState(0);
   const barRef = useRef(null);
+  const skipNextAutoSave = useRef(false);
+  const lastSelectedDescription = useRef(null);
+
 
   useEffect(() => {
     if (!barRef.current) return;
@@ -77,21 +87,29 @@ export default function TimeEntryForm({
 
   /* ───────────── Autocomplete Prefill ───────────── */
   useEffect(() => {
-    if (activeEntry) {
-      setDescription(activeEntry.description || "");
-      setSelectedProject(activeEntry.projectId?.toString() || "");
-      setCustomStartTime(new Date(activeEntry.start).toISOString().slice(0, 16));
-    }
-  }, [activeEntry]);
+    if (!activeEntry) return;
+
+    setDescription(activeEntry.description || "");
+    setCustomStartTime(new Date(activeEntry.start).toISOString().slice(0, 16));
+
+    // Projekt-Objekt zur ID holen
+    const proj = visibleProjects.find(p => p.id === activeEntry.projectId) || null;
+    setSelectedProject(proj);
+    setSelectedProjectId(proj?.id || "");
+
+    // Tätigkeit-ID übernehmen (falls vorhanden)
+    setSelectedActivityId(activeEntry.activityId || "");
+  }, [activeEntry, visibleProjects]);
 
   /* ───────────── Projekte gruppieren (nach customerId) ───────────── */
   const grouped = customers.map((cust) => ({
     customer: cust.name,
-    projects: projects.filter((p) => p.customerId === cust.id),
+    projects: visibleProjects.filter((p) => p.customerId === cust.id),
   }));
 
+
   // Optional: Projekte ohne Kunden
-  const unassigned = projects.filter((p) => !p.customerId);
+  const unassigned = visibleProjects.filter((p) => !p.customerId);
   if (unassigned.length > 0) {
     grouped.push({ customer: "Ohne Kunden", projects: unassigned });
   }
@@ -99,15 +117,15 @@ export default function TimeEntryForm({
   /* ───────────── Timer Start/Stop ───────────── */
   const startTimer = () => {
     if (!selectedProject || !description.trim()) return;
-    const project = projects.find((p) => p.id === selectedProject);
     const startIso = showTimeInput ? customStartTime : new Date().toISOString();
     const newEntry = {
       id: Date.now(),
-      projectId: selectedProject,
-      projectName: project?.name || "Unbekannt",
+      projectId: selectedProject.id,
+      projectName: selectedProject.name,
       description,
       start: startIso,
       end: null,
+      activityId: selectedActivityId || "",
     };
     setActiveEntry(newEntry);
     setElapsed(0);
@@ -118,15 +136,25 @@ export default function TimeEntryForm({
     const end = new Date().toISOString();
     const duration =
       (new Date(end) - new Date(activeEntry.start)) / 1000 / 60 / 60;
+
     const completed = {
       ...activeEntry,
       end,
       duration: duration.toFixed(2),
     };
+
     onAdd(completed);
+
+    // 🧠 State sauber zurücksetzen
     setActiveEntry(null);
     setDescription("");
-    setSelectedProject("");
+    setSelectedProject(null);
+    setSelectedProjectId("");
+    setSelectedActivityId("");
+
+    // 🔒 Activity-/Time-Accordions schließen
+    setShowActivitySelect(false);
+    setShowTimeInput(false);
   };
 
   /* ───────────── Helpers ───────────── */
@@ -161,20 +189,20 @@ export default function TimeEntryForm({
         ref={barRef}
         className={`transition-[background-color,box-shadow,padding] duration-300 ease-out
           ${isSticky
-            ? "fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-slate-700/50 to-slate-800 border-b border-slate-700 backdrop-blur-md shadow-lg px-4 py-3"
-            : "bg-gradient-to-b from-slate-700/50 to-slate-800 border border-slate-200/10 rounded-2xl shadow-2xl p-8 mb-6"
+            ? "fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-slate-700/50 to-slate-800 border-b border-slate-700 backdrop-blur-md shadow-lg justify-items-center"
+            : "bg-gradient-to-b from-slate-700/50 to-slate-800 border border-slate-200/10 rounded-2xl shadow-2xl p-4 mb-6"
           } max-w-screen`}
       >
         {/* Titel */}
         {!isSticky && (
-          <h2 className="text-2xl font-semibold text-slate-200 mb-6 tracking-tight">
+          <h2 className="text-2xl font-semibold text-slate-200 px-4 mb-4 mt-6 tracking-tight">
             what are you working on?
           </h2>
         )}
 
         {/* Inhalt */}
         <div
-          className={`flex ${
+          className={`flex max-w-3xl w-full p-4 ${
             isSticky ? "items-center gap-2 justify-between" : "flex-col space-y-4"
           } transition-all duration-500`}
         >
@@ -194,30 +222,38 @@ export default function TimeEntryForm({
             }}
             onSelectionChange={(key) => {
               if (!key) return;
+
+              if (lastSelectedDescription.current === key) return;
+              lastSelectedDescription.current = key;
+
+              if (skipNextAutoSave.current) {
+                skipNextAutoSave.current = false;
+                return;
+              }
+
               const item = suggestions.find((s) => s.description === key);
               if (!item) return;
 
-              const project = projects.find((p) => p.id === item.projectId);
+              const project = visibleProjects.find((p) => p.id === item.projectId);
               const projectId = project?.id || item.projectId;
 
-              // Beschreibung + Projekt übernehmen
               setDescription(item.description);
-              setSelectedProject(projectId);
+              setSelectedProject(project || null);
+              setSelectedProjectId(projectId);
 
-              // Optional: Wenn bereits ein aktiver Timer läuft, erst stoppen
+              // Default-Tätigkeit ermitteln
+              const defaultAct = project?.activities?.find((a) => a.isDefault);
+              setSelectedActivityId(defaultAct?.id || "");
+
+              // Wenn bereits ein Timer läuft → abschließen
               if (activeEntry) {
                 const end = new Date().toISOString();
                 const duration =
                   (new Date(end) - new Date(activeEntry.start)) / 1000 / 60 / 60;
-                const completed = {
-                  ...activeEntry,
-                  end,
-                  duration: duration.toFixed(2),
-                };
-                onAdd(completed);
+                onAdd({ ...activeEntry, end, duration: duration.toFixed(2) });
               }
 
-              // 🟢 Sofort neuen Timer starten
+              // Neuen Timer starten (nur EINMAL)
               const startIso = new Date().toISOString();
               const newEntry = {
                 id: Date.now(),
@@ -226,6 +262,7 @@ export default function TimeEntryForm({
                 description: item.description,
                 start: startIso,
                 end: null,
+                activityId: defaultAct?.id || selectedActivityId || "",
               };
 
               setActiveEntry(newEntry);
@@ -270,19 +307,26 @@ export default function TimeEntryForm({
           <Autocomplete
             placeholder="Projekt auswählen..."
             size={isSticky ? "md" : "lg"}
-            selectedKey={selectedProject?.toString()}
+            selectedKey={selectedProjectId}
             aria-label="Projekt auswählen"
             onSelectionChange={(key) => {
               if (!key) return;
               const newProjectId = typeof key === "string" ? key : [...key][0];
-              setSelectedProject(newProjectId);
-              const newProject = projects.find((p) => p.id === newProjectId);
+              const newProject = visibleProjects.find((p) => p.id === newProjectId) || null;
+
+              setSelectedProjectId(newProjectId);
+              setSelectedProject(newProject);
+
+              const defaultActivityObj = newProject?.activities?.find((a) => a.isDefault);
+              setSelectedActivityId(defaultActivityObj?.id || "");
+
               if (activeEntry) {
-                setActiveEntry({
-                  ...activeEntry,
-                  projectId: newProject?.id || newProjectId,
+                setActiveEntry((prev) => ({
+                  ...prev,
+                  projectId: newProjectId,
                   projectName: newProject?.name || "Unbekannt",
-                });
+                  activityId: defaultActivityObj?.id || prev?.activityId || "",
+                }));
               }
             }}
             classNames={{
@@ -308,89 +352,6 @@ export default function TimeEntryForm({
                 )
             )}
           </Autocomplete>
-
-          {/* Startzeit anpassen (nur große Variante) */}
-          {!isSticky && (
-            <div className="flex items-center justify-end gap-3 text-sm mt-2">
-              {showTimeInput ? (
-                <>
-                  <Input
-                    type="time"
-                    step="60"
-                    size="sm"
-                    color="white"
-                    variant="flat"
-                    classNames={{
-                      base: "w-auto",
-                      inputWrapper:
-                        "bg-slate-700 hover:bg-slate-600 rounded-md h-8 border border-slate-700",
-                      input:
-                        "text-slate-400 text-xs placeholder:text-slate-500",
-                    }}
-                    value={isoToLocalHM(
-                      activeEntry ? activeEntry.start : customStartTime
-                    )}
-                    onChange={(e) => {
-                      const newIso = localHMToISO(e.target.value);
-                      setCustomStartTime(newIso);
-                      if (activeEntry) {
-                        const updated = { ...activeEntry, start: newIso };
-                        setActiveEntry(updated);
-                        setElapsed((Date.now() - Date.parse(newIso)) / 1000);
-                      }
-                    }}
-                  />
-
-                  <Button
-                    size="sm"
-                    variant="flat"
-                    className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-400"
-                    onPress={() => {
-                      const list = Array.isArray(entries) ? entries : [];
-                      const finished = list.filter((e) => e?.end);
-                      if (finished.length === 0) return;
-                      const last = finished.reduce((latest, e) =>
-                        new Date(e.end) > new Date(latest.end) ? e : latest
-                      );
-                      if (!last?.end) return;
-                      const lastEndIso = new Date(last.end).toISOString();
-                      setCustomStartTime(lastEndIso);
-                      if (activeEntry) {
-                        const updated = { ...activeEntry, start: lastEndIso };
-                        setActiveEntry(updated);
-                        setElapsed(
-                          (Date.now() - Date.parse(lastEndIso)) / 1000
-                        );
-                      }
-                    }}
-                  >
-                    Letzte Endzeit übernehmen
-                  </Button>
-
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-400"
-                    variant="flat"
-                    onPress={() => setShowTimeInput(false)}
-                  >
-                    <X className="w-4 h-4 text-slate-400" />
-                  </Button>
-                </>
-              ) : (
-                <button
-                  onClick={() => {
-                    const nowIso = new Date().toISOString();
-                    setCustomStartTime(nowIso);
-                    setShowTimeInput(true);
-                  }}
-                  className="text-xs text-slate-400 hover:text-slate-200"
-                >
-                  Startzeit anpassen
-                </button>
-              )}
-            </div>
-          )}
 
           {/* Timer */}
           <div className={`${isSticky ? "flex-shrink-0" : "mt-3"}`}>
@@ -427,6 +388,148 @@ export default function TimeEntryForm({
               </Button>
             )}
           </div>
+
+          {/* Nur in der großen Ansicht */}
+          {!isSticky && (
+            <div>
+
+              {/* 🔹 Toggle Buttons */}
+              <div
+                className={`flex ${
+                  selectedProject ? "justify-between" : "justify-end"
+                }`}
+              >
+                {selectedProject && (
+                  <button
+                    onClick={() => {
+                      setShowActivitySelect((prev) => !prev);
+                      setShowTimeInput(false); // 🟢 Nur eins offen
+                    }}
+                    className={`text-xs transition-colors ${
+                      showActivitySelect
+                        ? "text-slate-200"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    Tätigkeit anpassen
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    setShowTimeInput((prev) => !prev);
+                    setShowActivitySelect(false); // 🟢 Nur eins offen
+                  }}
+                  className={`text-xs transition-colors ${
+                    showTimeInput
+                      ? "text-slate-200"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  Startzeit anpassen
+                </button>
+              </div>
+
+              {/* 🔻 Accordion-Content */}
+              <div className="overflow-hidden transition-all duration-300">
+                {/* 🧩 Tätigkeit-Auswahl */}
+                {showActivitySelect && (
+                  <div className="mt-2">
+                  {selectedProject?.activities?.length > 0 ? (
+                    <>
+                      <Select
+                        label="Tätigkeit auswählen"
+                        placeholder="Wähle eine Tätigkeit"
+                        selectedKeys={selectedActivityId ? [selectedActivityId] : []}
+                        onSelectionChange={(keys) => {
+                          const val = Array.from(keys)[0]; // das ist die activityId
+                          setSelectedActivityId(val);
+                          if (activeEntry) setActiveEntry((prev) => ({ ...prev, activityId: val }));
+                        }}
+                        size="sm"
+                        classNames={{
+                          base: "w-full",
+                          label: "!text-slate-400 text-xs",
+                          trigger:
+                            "bg-slate-700 hover:!bg-slate-600 !text-slate-200 rounded-md h-8 border border-slate-700",
+                          popoverContent:
+                            "bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700",
+                        }}
+                      >
+                        {selectedProject?.activities?.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {a.label}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    </>
+                  ) : (
+                    <div className="text-xs text-slate-500 italic">
+                      Keine Tätigkeiten definiert
+                    </div>
+                  )}
+                </div>
+                )}
+
+                {/* 🕓 Startzeit-Auswahl */}
+                {showTimeInput && (
+                  <div className="mt-2">
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="time"
+                        step="60"
+                        size="sm"
+                        color="white"
+                        variant="flat"
+                        classNames={{
+                          base: "flex-1 w-auto",
+                          inputWrapper:
+                            "bg-slate-700 hover:bg-slate-600 rounded-md h-8 border border-slate-700",
+                          input: "text-slate-400 text-xs placeholder:text-slate-500",
+                        }}
+                        value={isoToLocalHM(activeEntry ? activeEntry.start : customStartTime)}
+                        onChange={(e) => {
+                          const newIso = localHMToISO(e.target.value);
+                          setCustomStartTime(newIso);
+                          if (activeEntry) {
+                            const updated = { ...activeEntry, start: newIso };
+                            setActiveEntry(updated);
+                            setElapsed((Date.now() - Date.parse(newIso)) / 1000);
+                          }
+                        }}
+                      />
+
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-400"
+                        onPress={() => {
+                          const finishedEntries = entries.filter((e) => e?.end);
+                          if (finishedEntries.length === 0) return;
+
+                          const last = finishedEntries.sort(
+                            (a, b) => new Date(b.end) - new Date(a.end)
+                          )[0];
+                          if (!last?.end) return;
+
+                          const lastEndIso = new Date(last.end).toISOString();
+                          setCustomStartTime(lastEndIso);
+
+                          if (activeEntry) {
+                            skipNextAutoSave.current = true; // 🧠 verhindert Autocomplete-Neustart
+                            setActiveEntry((prev) => prev ? { ...prev, start: lastEndIso } : prev);
+                            setElapsed((Date.now() - Date.parse(lastEndIso)) / 1000);
+                          }
+                        }}
+                      >
+                        Letzte Endzeit übernehmen
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

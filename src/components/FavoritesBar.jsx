@@ -2,7 +2,6 @@ import React, { useMemo, useRef } from "react";
 import { Button } from "@nextui-org/react";
 import { useToast } from "./Toast";
 
-
 export default function FavoritesBar({ entries = [], settings = {}, activeEntry, onSelect }) {
   const {
     showFavorites = true,
@@ -14,10 +13,9 @@ export default function FavoritesBar({ entries = [], settings = {}, activeEntry,
   const scrollRef = useRef(null);
   const { showToast } = useToast();
 
-  if (!showFavorites || entries.length === 0) return null;
-
   // 🧠 Häufig genutzte Tasks (Top 10 für Scrollbarkeit)
   const topTasks = useMemo(() => {
+    if (!entries || entries.length === 0) return [];
     const counts = entries.reduce((acc, e) => {
       if (!e.projectId || !e.description) return acc;
       const key = `${e.projectId}::${e.description}`;
@@ -39,7 +37,7 @@ export default function FavoritesBar({ entries = [], settings = {}, activeEntry,
 
   // 🧩 Manuelle Favoriten (falls aktiv)
   const manualTasks = useMemo(() => {
-    if (!manualMode) return [];
+    if (!manualMode || !entries) return [];
     const allTasks = entries.reduce((acc, e) => {
       const key = `${e.projectId}::${e.description}`;
       if (!acc[key])
@@ -57,9 +55,7 @@ export default function FavoritesBar({ entries = [], settings = {}, activeEntry,
   const displayTasks =
     manualMode && manualTasks.length > 0 ? manualTasks : topTasks;
 
-  if (displayTasks.length === 0) return null;
-
-  // 🔹 Scrollen per Klick (optional, z. B. mit Pfeilen)
+  // 🔹 Scrollen per Klick
   const scroll = (dir) => {
     if (!scrollRef.current) return;
     scrollRef.current.scrollBy({
@@ -77,9 +73,11 @@ export default function FavoritesBar({ entries = [], settings = {}, activeEntry,
     });
   }, [displayTasks]);
 
+  // 🟢 Frühestens jetzt: Return, wenn nix zu zeigen ist
+  if (!showFavorites || uniqueDisplayTasks.length === 0) return null;
+
   return (
     <div className="relative w-full">
-
       {/* Scrollbarer Bereich */}
       <div
         ref={scrollRef}
@@ -93,9 +91,9 @@ export default function FavoritesBar({ entries = [], settings = {}, activeEntry,
             variant="flat"
             className="bg-slate-700 text-slate-200 hover:bg-slate-600 transition-all px-3 rounded-lg shadow-sm hover:shadow-md flex-shrink-0"
             onPress={() => {
-              if (!t.projectId) return; // 🧩 safety
+              if (!t.projectId) return;
               onSelect({
-                projectId: t.projectId.toString(), // ✅ String erzwingen
+                projectId: t.projectId.toString(),
                 projectName: t.projectName,
                 description: t.description,
               });

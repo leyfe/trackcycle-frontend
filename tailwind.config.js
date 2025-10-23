@@ -21,7 +21,7 @@ export default {
   safelist: [
     {
       pattern:
-        /(bg|text|border|ring|shadow|hover:bg|hover:text|hover:border|focus:bg|focus:text|focus:border)-(rose|orange|yellow|lime|emerald|sky|indigo|purple|fuchsia|slate)-(400|500|600|700)/,
+        /(bg|text|border|ring|shadow|fill|hover:bg|hover:text|hover:border|focus:bg|focus:text|focus:border)-(rose|orange|yellow|lime|emerald|sky|indigo|purple|fuchsia|slate)-(400|500|600|700)/,
     },
     // optional: Light + Dark Ringe separat
     {

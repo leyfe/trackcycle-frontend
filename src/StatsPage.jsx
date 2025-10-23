@@ -118,25 +118,26 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   });
 
   /* ────────────── PROJEKTVERTEILUNG ────────────── */
+  // 🧩 Projekte aus LocalStorage laden
+  const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+  const projById = Object.fromEntries(projects.map(p => [p.id, p]));
   const projectData = useMemo(() => {
     const projMap = {};
     for (const e of workEntries) {
-      if (!e.projectName) continue;
-      const key = `${e.projectName}__${e.description || "?"}`;
+      // 🔹 Namen aus Projekt-Liste ziehen, falls im Entry kein Name vorhanden ist
+      const project = projById[e.projectId];
+      const name = project?.name || e.projectName || "Unbekannt";
+      if (!name) continue;
       const durMin = (parseFloat(e.duration) || 0) * 60;
-      if (!projMap[key]) projMap[key] = 0;
-      projMap[key] += durMin;
+      if (!projMap[name]) projMap[name] = 0;
+      projMap[name] += durMin;
     }
-    const projectTotals = {};
-    for (const key in projMap) {
-      const [project] = key.split("__");
-      const total = roundEnabled ? roundToQuarter(projMap[key]) : projMap[key];
-      projectTotals[project] = (projectTotals[project] || 0) + total;
-    }
-    return Object.entries(projectTotals)
-      .map(([project, minutes]) => ({ project, hours: minutes / 60 }))
-      .sort((a, b) => b.hours - a.hours);
-  }, [workEntries, roundEnabled]);
+    const projectTotals = Object.entries(projMap).map(([project, minutes]) => ({
+      project,
+      hours: (roundEnabled ? roundToQuarter(minutes) : minutes) / 60,
+    }));
+    return projectTotals.sort((a, b) => b.hours - a.hours);
+  }, [workEntries, roundEnabled, projects]);
 
   /* ────────────── SUMMARY ────────────── */
   const summaryText = `

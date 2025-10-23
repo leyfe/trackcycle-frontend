@@ -31,13 +31,17 @@ export default function EntryList({
   const custById = Object.fromEntries(customers.map(c => [c.id, c]));
   const roundEnabled = settings?.roundToQuarter ?? false;
 
-  if (!entries.length)
+  useEffect(() => {
+    setHasMore(visibleDays < entries.length);
+  }, [visibleDays, entries.length]);
+
+  if (!entries || entries.length === 0) {
     return (
       <div className="text-slate-500 text-center mt-4">
         Noch keine Zeiteinträge vorhanden.
       </div>
     );
-
+  }
   const roundToQuarter = (minutes) => Math.ceil(minutes / 15) * 15;
 
   // 🧠 Helper: Pausen-Erkennung
@@ -80,10 +84,6 @@ export default function EntryList({
     return parseDate(b) - parseDate(a);
   });
 
-  useEffect(
-    () => setHasMore(visibleDays < sortedDates.length),
-    [visibleDays, sortedDates.length]
-  );
   const visibleDates = sortedDates.slice(0, visibleDays);
 
   const groupTasks = (dayEntries) => {
