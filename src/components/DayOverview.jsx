@@ -46,8 +46,14 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
   // 📂 Projekte gruppieren
   const grouped = customers.map((cust) => ({
     customer: cust.name,
-    projects: projects.filter((p) => p.client === cust.name),
+    projects: projects.filter((p) => p.customerId === cust.id),
   }));
+
+  // optional: Projekte ohne Kunde
+  const unassigned = projects.filter((p) => !p.customerId);
+  if (unassigned.length > 0) {
+    grouped.push({ customer: "— Ohne Kunden —", projects: unassigned });
+  }
 
   const handleAddGapEntry = () => {
     if (!activeGap || !description || !projectId) return;
