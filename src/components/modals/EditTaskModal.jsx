@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useContext } from "react";
-import { CustomerContext } from "../context/CustomerContext";
+import { CustomerContext } from "../../context/CustomerContext";
 
 import {
   Modal,

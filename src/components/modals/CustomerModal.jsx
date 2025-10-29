@@ -2,7 +2,7 @@
 // 
 import React, { useState, useContext } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, Input, Button } from "@nextui-org/react";
-import { CustomerContext } from "../context/CustomerContext";
+import { CustomerContext } from "../../context/CustomerContext";
 import { Trash2, Plus } from "lucide-react";
 
 

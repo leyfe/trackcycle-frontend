@@ -7,7 +7,7 @@ import {
     Input,
 } from "@nextui-org/react";
 import { FolderCog, Users } from "lucide-react";
-import ConaktivExportModal from "../components/ConaktivExportModal";
+import ConaktivExportModal from "../components/modals/ConaktivExportModal";
 import { exportAllData, exportEntriesCSV, exportEntriesConaktiv } from "../utils/exportData";
 import { importAllData } from "../utils/importData";
 import PageHeader from "../components/PageHeader";

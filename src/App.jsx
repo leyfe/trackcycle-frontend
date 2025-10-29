@@ -11,7 +11,7 @@ import BottomNav from "./components/BottomNav";
 import { ProjectContext } from "./context/ProjectContext";
 import { useToast } from "./components/Toast";
 import useSuggestions from "./hooks/useSuggestions";
-import EditTaskModal from "./components/EditTaskModal";
+import EditTaskModal from "./components/modals/EditTaskModal";
 
 export default function App() {
   // 🧠 Lokaler State

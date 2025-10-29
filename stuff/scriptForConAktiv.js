@@ -1,115 +1,123 @@
 const entries = [
 {
-    "date": "17.10.2025",
-    "hours": "3,00",
-    "customer": "Commerzbank AG",
-    "project": "Com.4534",
-    "activity": "Tech. Projektmanager FeLe",
-    "description": "Coba Schulung"
-  },
-  {
-    "date": "17.10.2025",
+    "date": "20.10.2025",
     "hours": "0,50",
-    "customer": "Commerzbank AG",
-    "project": "Com.4534",
-    "activity": "Unbekannt",
-    "description": "Coba E-Mail-Support"
-  },
-  {
-    "date": "17.10.2025",
-    "hours": "0,25",
-    "customer": "Commerzbank AG",
-    "project": "Com.4534",
-    "activity": "Tech. Projektmanager FeLe",
-    "description": "QA Coba"
-  },
-  {
-    "date": "17.10.2025",
-    "hours": "0,50",
-    "customer": "Salient GmbH",
-    "project": "sal.3465",
-    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
-    "description": "Jira"
-  },
-  {
-    "date": "17.10.2025",
-    "hours": "1,00",
     "customer": "Salient GmbH",
     "project": "sal.3465",
     "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
     "description": "E-Mails"
   },
   {
-    "date": "17.10.2025",
-    "hours": "0,50",
-    "customer": "Salient GmbH",
-    "project": "sal.3465",
-    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
-    "description": "Todo/Status Check"
-  },
-  {
-    "date": "17.10.2025",
-    "hours": "0,25",
-    "customer": "Salient GmbH",
-    "project": "sal.3465",
-    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
-    "description": "Interne Besprechung mit Rene"
-  },
-  {
-    "date": "17.10.2025",
-    "hours": "0,25",
-    "customer": "Landesbank Baden-Württemberg",
-    "project": "LBBW.1025",
-    "activity": "Tech. Projektmanager FeLe",
-    "description": "Organisatorisches (Authada-Entfernung)"
-  },
-  {
-    "date": "17.10.2025",
+    "date": "20.10.2025",
     "hours": "0,25",
     "customer": "Commerzbank AG",
     "project": "Com.4534",
     "activity": "Tech. Projektmanager FeLe",
-    "description": "QA Coba (Auswahlfelder)"
+    "description": "Coba Release Aufräumen"
   },
   {
-    "date": "17.10.2025",
-    "hours": "0,25",
+    "date": "20.10.2025",
+    "hours": "2,25",
     "customer": "Salient GmbH",
     "project": "sal.3465",
     "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
-    "description": "Organisatorisches (Openforms)"
+    "description": "Jira"
   },
   {
-    "date": "17.10.2025",
+    "date": "20.10.2025",
+    "hours": "0,75",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "QA Coba"
+  },
+  {
+    "date": "20.10.2025",
     "hours": "0,50",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "Coba Schulung"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,75",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "Interne Besprechung Rene"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,25",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "E-Mail Suppoert"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "1,50",
     "customer": "Salient GmbH",
     "project": "sal.3465",
     "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
     "description": "Administration"
   },
   {
-    "date": "17.10.2025",
+    "date": "20.10.2025",
+    "hours": "0,75",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "Coba QA"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,50",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "E-Mail Support"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,25",
+    "customer": "Commerzbank AG",
+    "project": "Com.4615",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "E-Mail Postfach"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,50",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "Tickets CSV Integration"
+  },
+  {
+    "date": "20.10.2025",
     "hours": "0,50",
     "customer": "Salient GmbH",
     "project": "sal.3465",
     "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
-    "description": "PM-Meeting"
+    "description": "Layout- & CI-Abstimmung Openforms"
   },
   {
-    "date": "17.10.2025",
-    "hours": "1,00",
-    "customer": "Salient GmbH",
-    "project": "sal.3465",
-    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
-    "description": "Interne Besprechung Entwicklung"
-  },
-  {
-    "date": "17.10.2025",
+    "date": "20.10.2025",
     "hours": "0,50",
     "customer": "Salient GmbH",
     "project": "sal.3465",
     "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
     "description": "Daily Huddle"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,75",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "KVA CSV"
   }
 ];
 
@@ -190,7 +198,7 @@ async function fillEntry(entry, index) {
     }
 
     // Jetzt die restlichen Felder (nachdem Re-Init fertig ist)
-    await wait(3000);
+    await wait(8000);
 
     // 🗓️ Arbeitstag
     const dateField = document.querySelector('input[name*="KA_Endetag"]');
@@ -200,7 +208,7 @@ async function fillEntry(entry, index) {
         console.warn("❌ Arbeitstag nicht gefunden");
     }
 
-    await wait(1000);
+    await wait(3000);
 
     // ⏱️ Anzahl
     const hoursField = document.querySelector('input[name*="KA_Anzahl"]');

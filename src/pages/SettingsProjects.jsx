@@ -16,7 +16,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
-import ActivityModal from "../components/ActivityModal";
+import ActivityModal from "../components/modals/ActivityModal";
 
 export default function SettingsProjects({ onBack, settings }) {
   const [projects, setProjects] = useState([]);
