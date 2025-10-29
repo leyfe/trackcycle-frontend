@@ -46,8 +46,14 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
   // 📂 Projekte gruppieren
   const grouped = customers.map((cust) => ({
     customer: cust.name,
-    projects: projects.filter((p) => p.client === cust.name),
+    projects: projects.filter((p) => p.customerId === cust.id),
   }));
+
+  // optional: Projekte ohne Kunde
+  const unassigned = projects.filter((p) => !p.customerId);
+  if (unassigned.length > 0) {
+    grouped.push({ customer: "— Ohne Kunden —", projects: unassigned });
+  }
 
   const handleAddGapEntry = () => {
     if (!activeGap || !description || !projectId) return;
@@ -147,71 +153,73 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
 
                   {/* 🔹 Autocomplete für Beschreibung */}
                   <Autocomplete
-                          ref={suggestionRef}
-                          size="lg"
-                          placeholder="Was habe ich gemacht?"
-                          allowsCustomValue
-                          inputValue={description}
-                          onInputChange={(val) => {
-                            setDescription(val);
+                    ref={suggestionRef}
+                    size="lg"
+                    placeholder="Was habe ich gemacht?"
+                    allowsCustomValue
+                    inputValue={description}
+                    onInputChange={(val) => {
+                      setDescription(val);
+                    }}
+                    selectedKey={null}
+                    classNames={{
+                      popoverContent: "ac-popover",   // <— eigene Klasse am Popover
+                      // (falls deine NextUI-Version es supportet, zusätzlich:)
+                      listboxWrapper: "max-h-[70vh]"  // harmless fallback
+                    }}
+                    className={`transition-all duration-200 ${
+                      "opacity-100 bg-slate-800 hover:bg-slate-700"
+                    } rounded-xl border border-slate-700`}
+                  >
+                    {suggestions?.map((s, i) => {
+                      const project = projects.find((p) => p.id === s.projectId);
+                      return (
+                        <AutocompleteItem
+                          key={`${s.description}-${s.projectId}-${i}`}
+                          textValue={s.description}
+                          onPress={() => {
+                            setDescription(s.description);
+                            if (project) setSelectedProject(project.id);
                           }}
-                          selectedKey={null}
-                          classNames={{
-                            popoverContent: "ac-popover",   // <— eigene Klasse am Popover
-                            // (falls deine NextUI-Version es supportet, zusätzlich:)
-                            listboxWrapper: "max-h-[70vh]"  // harmless fallback
-                          }}
-                          className={`transition-all duration-200 ${
-                            "opacity-100 bg-slate-800 hover:bg-slate-700"
-                          } rounded-xl border border-slate-700`}
                         >
-                          {suggestions?.map((s, i) => {
-                            const project = projects.find((p) => p.id === s.projectId);
-                            return (
-                              <AutocompleteItem
-                                key={`${s.description}-${s.projectId}-${i}`}
-                                textValue={s.description}
-                                onPress={() => {
-                                  setDescription(s.description);
-                                  if (project) setSelectedProject(project.id);
-                                }}
-                              >
-                                <div className="flex flex-col">
-                                  <span>{s.description}</span>
-                                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                                    {project?.name || "Projekt unbekannt"}
-                                  </span>
-                                </div>
-                              </AutocompleteItem>
-                            );
-                          })}
-                        </Autocomplete>
+                          <div className="flex flex-col">
+                            <span>{s.description}</span>
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
+                              {project?.name || "Projekt unbekannt"}
+                            </span>
+                          </div>
+                        </AutocompleteItem>
+                      );
+                    })}
+                  </Autocomplete>
 
-      {/* Projekt-Auswahl */}
-      <Autocomplete
-        placeholder="Projekt auswählen..."
-        variant="flat"
-        size="lg"
-        onSelectionChange={(key) => {
-          if (!key) return;
-          const newProjectId = typeof key === "string" ? key : [...key][0];
-          const newProject = projects.find((p) => p.id === newProjectId);
-        }}
-        className={`transition-all duration-200 text-slate-950 ${
-            "opacity-100 bg-slate-800 hover:bg-slate-700"
-        } rounded-xl border border-slate-700`}
-      >
-        {grouped.map(
-          (group) =>
-            group.projects.length > 0 && (
-              <AutocompleteSection key={group.customer} title={group.customer}>
-                {group.projects.map((p) => (
-                  <AutocompleteItem key={p.id.toString()}>{p.name}</AutocompleteItem>
-                ))}
-              </AutocompleteSection>
-            )
-        )}
-      </Autocomplete>
+                  {/* Projekt-Auswahl */}
+                  <Autocomplete
+                    placeholder="Projekt auswählen..."
+                    variant="flat"
+                    size="lg"
+                    onSelectionChange={(key) => {
+                      if (!key) return;
+                      const newProjectId = typeof key === "string" ? key : [...key][0];
+                      setProjectId(newProjectId); // ✅ hier speichern!
+                    }}
+                    className={`transition-all duration-200 text-slate-950 ${
+                        "opacity-100 bg-slate-800 hover:bg-slate-700"
+                    } rounded-xl border border-slate-700`}
+                  >
+                    {grouped.map(
+                      (group) =>
+                        group.projects.length > 0 && (
+                          <AutocompleteSection key={group.customer} title={group.customer}>
+                            {group.projects.map((p) => (
+                              <AutocompleteItem key={p.id.toString()}>
+                                {p.name}
+                              </AutocompleteItem>
+                            ))}
+                          </AutocompleteSection>
+                        )
+                    )}
+                  </Autocomplete>
 
                   {/* 🔹 Aktionen */}
                   <div className="flex justify-end gap-2 pt-2">

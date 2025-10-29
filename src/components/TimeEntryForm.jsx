@@ -189,7 +189,7 @@ export default function TimeEntryForm({
         ref={barRef}
         className={`transition-[background-color,box-shadow,padding] duration-300 ease-out
           ${isSticky
-            ? "fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-slate-700/50 to-slate-800 border-b border-slate-700 backdrop-blur-md shadow-lg justify-items-center"
+            ? "fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-slate-700/50 to-slate-800 border-b border-slate-700 backdrop-blur-md shadow-lg justify-items-center text-center"
             : "bg-gradient-to-b from-slate-700/50 to-slate-800 border border-slate-200/10 rounded-2xl shadow-2xl p-4 mb-6"
           } max-w-screen`}
       >
@@ -203,7 +203,7 @@ export default function TimeEntryForm({
         {/* Inhalt */}
         <div
           className={`flex max-w-3xl w-full p-4 ${
-            isSticky ? "items-center gap-2 justify-between" : "flex-col space-y-4"
+            isSticky ? "items-center gap-2 inline-flex justify-between" : "flex-col space-y-4"
           } transition-all duration-500`}
         >
           {/* Beschreibung */}

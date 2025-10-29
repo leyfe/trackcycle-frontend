@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
+import { CustomerContext } from "../../context/CustomerContext";
+
 import {
   Modal,
   ModalContent,
@@ -12,6 +14,7 @@ import {
 } from "@nextui-org/react";
 
 export default function EditTaskModal({ isOpen, onClose, task, onSave, projects }) {
+  const { customers } = useContext(CustomerContext);
   const [editedTask, setEditedTask] = useState(task || {});
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -71,11 +74,12 @@ export default function EditTaskModal({ isOpen, onClose, task, onSave, projects 
     onClose();
   };
 
-  // 🔹 Projekte gruppieren
-  const groupedProjects = projects.reduce((acc, proj) => {
-    (acc[proj.client] ||= []).push(proj);
-    return acc;
-  }, {});
+  // ✅ Gruppierung: nach customerId statt client
+  const groupedProjects = customers.map((cust) => ({
+    customer: cust.name,
+    projects: projects.filter((p) => p.customerId === cust.id),
+  }));
+
 
   return (
     <Modal
@@ -112,9 +116,9 @@ export default function EditTaskModal({ isOpen, onClose, task, onSave, projects 
                   }));
                 }}
               >
-                {Object.entries(groupedProjects).map(([client, list]) => (
-                  <SelectSection key={client} title={client}>
-                    {list.map((p) => (
+                {groupedProjects.map((group) => (
+                  <SelectSection key={group.customer} title={group.customer}>
+                    {group.projects.map((p) => (
                       <SelectItem key={p.id}>{p.name}</SelectItem>
                     ))}
                   </SelectSection>

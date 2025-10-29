@@ -16,7 +16,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
-import ActivityModal from "../components/ActivityModal";
+import ActivityModal from "../components/modals/ActivityModal";
 
 export default function SettingsProjects({ onBack, settings }) {
   const [projects, setProjects] = useState([]);
@@ -275,9 +275,7 @@ export default function SettingsProjects({ onBack, settings }) {
                       {/* 🧩 Tätigkeiten */}
                       <div className="border-t border-slate-700 mt-3 pt-3">
                         <div className="flex justify-between items-center mb-2">
-                          <h3 className="text-slate-300 text-sm font-medium">
-                            Tätigkeiten
-                          </h3>
+                          <h3 className="text-slate-300 text-sm font-medium">Tätigkeiten</h3>
                           <Button
                             size="sm"
                             className={`bg-${settings?.accentColor}-600 hover:bg-${settings?.accentColor}-500 text-white`}
@@ -291,16 +289,41 @@ export default function SettingsProjects({ onBack, settings }) {
                         </div>
 
                         {p.activities?.length > 0 ? (
-                          <ul className="space-y-1">
+                          <ul className="space-y-2">
                             {p.activities.map((a) => (
                               <li
                                 key={a.id}
-                                className="flex justify-between items-center bg-slate-800/70 rounded-lg px-3 py-1"
+                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-800/70 rounded-lg px-3 py-2 border border-slate-700"
                               >
-                                <div className="text-slate-200 text-sm flex items-center gap-2">
-                                  {a.label}
+                                {/* 🔸 Editierbares Feld */}
+                                <div className="flex-1">
+                                  <Input
+                                    classNames={{
+                                      inputWrapper: "bg-slate-700 hover:bg-slate-600 border border-slate-600",
+                                      input: "w-full text-slate-200 text-sm",
+                                    }}
+                                    value={a.label}
+                                    onChange={(e) => {
+                                      const newLabel = e.target.value;
+                                      setProjects((prev) =>
+                                        prev.map((proj) =>
+                                          proj.id === p.id
+                                            ? {
+                                                ...proj,
+                                                activities: proj.activities.map((act) =>
+                                                  act.id === a.id ? { ...act, label: newLabel } : act
+                                                ),
+                                              }
+                                            : proj
+                                        )
+                                      );
+                                    }}
+                                  />
                                 </div>
-                                <div className="flex gap-2">
+
+                                {/* 🔹 Buttons */}
+                                <div className="flex gap-2 justify-end sm:justify-normal">
+                                  {/* Standard setzen */}
                                   <Button
                                     isIconOnly
                                     size="sm"
@@ -313,17 +336,17 @@ export default function SettingsProjects({ onBack, settings }) {
                                         a.isDefault
                                           ? `fill-${settings?.accentColor}-400 text-${settings?.accentColor}-400`
                                           : "text-slate-500"
-                                        }`}
+                                      }`}
                                     />
                                   </Button>
+
+                                  {/* Löschen */}
                                   <Button
                                     isIconOnly
                                     size="sm"
                                     color="danger"
                                     variant="light"
-                                    onPress={() =>
-                                      handleDeleteActivity(p.id, a.id)
-                                    }
+                                    onPress={() => handleDeleteActivity(p.id, a.id)}
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -332,9 +355,7 @@ export default function SettingsProjects({ onBack, settings }) {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-xs text-slate-500 italic">
-                            Keine Tätigkeiten
-                          </p>
+                          <p className="text-xs text-slate-500 italic">Keine Tätigkeiten</p>
                         )}
                       </div>
 

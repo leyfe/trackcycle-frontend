@@ -1,3 +1,5 @@
+//BRAUCH ICH NICHT MEHR?
+// 
 import React, { useState, useContext } from "react";
 import {
   Modal,
@@ -10,10 +12,10 @@ import {
   SelectItem,
   Textarea,
 } from "@nextui-org/react";
-import { ProjectContext } from "../context/ProjectContext";
-import { CustomerContext } from "../context/CustomerContext";
+import { ProjectContext } from "../../context/ProjectContext";
+import { CustomerContext } from "../../context/CustomerContext";
 import { Trash2, Plus, Edit3, Save, X, AlertTriangle } from "lucide-react";
-import { useToast } from "./Toast";
+import { useToast } from "../Toast";
 
 export default function ProjectModal({ isOpen, onClose }) {
   const { projects, addProject, deleteProject, updateProject, setProjects } =

@@ -1,12 +1,12 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "devhost": "vite --host",
-    "build": "vite build",
+    "build": "VITE_APP_VERSION=$(node -p \"require('./package.json').version\") vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

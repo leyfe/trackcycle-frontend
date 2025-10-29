@@ -1,18 +1,124 @@
 const entries = [
-    {
-        date: "20.10.2025",
-        hours: "1,00",
-        customer: "00000",
-        project: "sal.3465",
-        description: "Testbuchung"
-    },
-    {
-        date: "20.10.2025",
-        hours: "1,00",
-        customer: "00000",
-        project: "sal.3465",
-        description: "Testbuchung"
-    }
+{
+    "date": "20.10.2025",
+    "hours": "0,50",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "E-Mails"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,25",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "Coba Release Aufräumen"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "2,25",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "Jira"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,75",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "QA Coba"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,50",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "Coba Schulung"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,75",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "Interne Besprechung Rene"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,25",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "E-Mail Suppoert"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "1,50",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "Administration"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,75",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "Coba QA"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,50",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "E-Mail Support"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,25",
+    "customer": "Commerzbank AG",
+    "project": "Com.4615",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "E-Mail Postfach"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,50",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "Tickets CSV Integration"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,50",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "Layout- & CI-Abstimmung Openforms"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,50",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "Daily Huddle"
+  },
+  {
+    "date": "20.10.2025",
+    "hours": "0,75",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "KVA CSV"
+  }
 ];
 
 // 🧩 Eingabe-Helfer (simuliert echtes Tippen)
@@ -26,7 +132,7 @@ async function typeLikeHuman(el, text, delay = 80) {
     }
     el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     el.dispatchEvent(new Event("blur", { bubbles: true }));
-    await new Promise(r => setTimeout(r, 800)); // etwas länger, um Re-Render abzuwarten
+    await new Promise(r => setTimeout(r, 400)); // etwas länger, um Re-Render abzuwarten
 }
 
 // 🕒 Wartefunktion
@@ -69,7 +175,7 @@ async function fillEntry(entry, index) {
     }
     */
     // Warten, bis Formular refresh fertig ist
-    await wait(1000);
+    await wait(2000);
 
     // 📁 Projekt danach
     const projectField = document.querySelectorAll('input[au-target-id="855"]')[1];
@@ -80,8 +186,19 @@ async function fillEntry(entry, index) {
         console.warn("❌ Projektfeld nicht gefunden");
     }
 
+    await wait(2000);
+
+    // 📁 Tätigkeit danach
+    const activityField = document.querySelectorAll('input[au-target-id="855"]')[2];
+    if (activityField) {
+        console.log("📁 Projekt:", entry.activity);
+        await typeLikeHuman(activityField, entry.activity);
+    } else {
+        console.warn("❌ Tätigkeitsfeld nicht gefunden");
+    }
+
     // Jetzt die restlichen Felder (nachdem Re-Init fertig ist)
-    await wait(100);
+    await wait(8000);
 
     // 🗓️ Arbeitstag
     const dateField = document.querySelector('input[name*="KA_Endetag"]');
@@ -91,7 +208,7 @@ async function fillEntry(entry, index) {
         console.warn("❌ Arbeitstag nicht gefunden");
     }
 
-    await wait(100);
+    await wait(3000);
 
     // ⏱️ Anzahl
     const hoursField = document.querySelector('input[name*="KA_Anzahl"]');

@@ -10,7 +10,7 @@ import {
   Radio,
   Input,
 } from "@nextui-org/react";
-import { exportEntriesConaktiv } from "../utils/exportData";
+import { exportEntriesConaktiv } from "../../utils/exportData";
 
 export default function ConaktivExportModal({ isOpen, onClose }) {
   const [mode, setMode] = useState("day");
