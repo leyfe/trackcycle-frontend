@@ -1,109 +1,121 @@
-import React, { useMemo, useRef } from "react";
-import { Button } from "@nextui-org/react";
-import { useToast } from "./Toast";
+import React, { useEffect, useState } from "react";
+import { Button, Tooltip } from "@nextui-org/react";
+import { Star, Play, Pause, Clock } from "lucide-react";
 
-export default function FavoritesBar({ entries = [], settings = {}, activeEntry, onSelect }) {
-  const {
-    showFavorites = true,
-    manualMode = false,
-    manualFavorites = [],
-    customLabels = {},
-  } = settings;
+export default function FavoritesBar({
+  entries = [],
+  settings,
+  onSelectFavorite,
+  activeEntry,
+}) {
+  const [favorites, setFavorites] = useState([]);
 
-  const scrollRef = useRef(null);
-  const { showToast } = useToast();
+  /* ───────────── Favoriten kombinieren ───────────── */
+  useEffect(() => {
+    const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
 
-  // 🧠 Häufig genutzte Tasks (Top 10 für Scrollbarkeit)
-  const topTasks = useMemo(() => {
-    if (!entries || entries.length === 0) return [];
-    const counts = entries.reduce((acc, e) => {
-      if (!e.projectId || !e.description) return acc;
+    // 🔹 Map aus entries erstellen (zum Fallback)
+    const entryMap = entries.reduce((acc, e) => {
       const key = `${e.projectId}::${e.description}`;
-      if (!acc[key])
+      if (!acc[key]) {
         acc[key] = {
           key,
           projectId: e.projectId,
           projectName: e.projectName,
           description: e.description,
-          count: 0,
+          activityId: e.activityId || "",
+          customerId: e.customerId || "",
+          hours: e.hours || "",
+          source: "entry",
         };
-      acc[key].count++;
+      }
       return acc;
     }, {});
-    return Object.values(counts)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 15);
-  }, [entries]);
 
-  // 🧩 Manuelle Favoriten (falls aktiv)
-  const manualTasks = useMemo(() => {
-    if (!manualMode || !entries) return [];
-    const allTasks = entries.reduce((acc, e) => {
-      const key = `${e.projectId}::${e.description}`;
-      if (!acc[key])
-        acc[key] = {
-          key,
-          projectId: e.projectId,
-          projectName: e.projectName,
-          description: e.description,
-        };
-      return acc;
-    }, {});
-    return manualFavorites.map((key) => allTasks[key]).filter(Boolean);
-  }, [entries, manualFavorites, manualMode]);
+    let favoritesList = [];
 
-  const displayTasks =
-    manualMode && manualTasks.length > 0 ? manualTasks : topTasks;
+    // 🟢 Wenn manuelle Favoriten vorhanden → nimm diese (mit Fallback auf entries)
+    if (settings.manualFavorites?.length > 0) {
+      favoritesList = settings.manualFavorites
+        .map((key) => {
+          // 1️⃣ versuche Details aus favoriteDetails zu holen
+          const f = settings.favoriteDetails?.[key];
 
-  // 🔹 Scrollen per Klick
-  const scroll = (dir) => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({
-      left: dir === "left" ? -200 : 200,
-      behavior: "smooth",
-    });
-  };
+          if (f) {
+            const proj = projects.find((p) => p.id === f.projectId);
+            return {
+              key,
+              projectId: f.projectId,
+              projectName: proj?.name || "–",
+              description: f.description,
+              activityId: f.activityId,
+              customerId: f.customerId,
+              hours: f.hours,
+              source: "manual",
+            };
+          }
 
-  const uniqueDisplayTasks = useMemo(() => {
-    const seen = new Set();
-    return displayTasks.filter((t) => {
-      if (seen.has(t.key)) return false;
-      seen.add(t.key);
-      return true;
-    });
-  }, [displayTasks]);
+          // 2️⃣ falls keine Details gespeichert → Fallback aus entries
+          const fromEntry = entryMap[key];
+          if (fromEntry) {
+            return {
+              ...fromEntry,
+              source: "manual-fallback",
+            };
+          }
 
-  // 🟢 Frühestens jetzt: Return, wenn nix zu zeigen ist
-  if (!showFavorites || uniqueDisplayTasks.length === 0) return null;
+          // 3️⃣ falls gar nichts gefunden → null
+          return null;
+        })
+        .filter(Boolean);
+    } else {
+      // 🔹 Fallback: häufige Tasks aus entries, wenn keine Favoriten existieren
+      favoritesList = Object.values(entryMap)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8);
+    }
+
+    setFavorites(favoritesList);
+  }, [entries, settings]);
+
+  /* ───────────── Favorit auswählen ───────────── */
+  function handleSelect(fav) {
+    if (!fav.projectId || !fav.description) return;
+    onSelectFavorite?.(fav);
+  }
+
+  /* ───────────── RENDER ───────────── */
+  if (!settings.showFavorites || favorites.length === 0) return null;
 
   return (
-    <div className="relative w-full">
-      {/* Scrollbarer Bereich */}
-      <div
-        ref={scrollRef}
-        className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 pt-1 scroll-smooth"
-        style={{ WebkitOverflowScrolling: "touch" }}
-      >
-        {uniqueDisplayTasks.map((t) => (
-          <Button
-            key={t.key}
-            size="sm"
-            variant="flat"
-            className="bg-slate-700 text-slate-200 hover:bg-slate-600 transition-all px-3 rounded-lg shadow-sm hover:shadow-md flex-shrink-0"
-            onPress={() => {
-              if (!t.projectId) return;
-              onSelect({
-                projectId: t.projectId.toString(),
-                projectName: t.projectName,
-                description: t.description,
-              });
-            }}
-            title={`${t.projectName} — ${t.description}`}
+    <div className="flex flex-wrap gap-2 mt-2">
+      {favorites.map((fav, index) => {
+        const isActive =
+          activeEntry &&
+          activeEntry.projectId === fav.projectId &&
+          activeEntry.description === fav.description;
+
+        return (
+          <Tooltip
+            key={fav.key || index}
+            content={`${fav.projectName || "Unbekannt"}${
+              fav.hours ? ` – ${fav.hours}h` : ""
+            }`}
+            className="text-xs"
           >
-            {customLabels[t.key] || t.description}
-          </Button>
-        ))}
-      </div>
+            <Button
+              onPress={() => handleSelect(fav)}
+              size="sm"
+              variant={isActive ? "solid" : "flat"}
+              className={`transition-all border border-slate-700 bg-slate-800/50 hover:bg-slate-700/60 text-slate-200`}
+            >
+              <span className="truncate max-w-[130px] text-xs font-medium">
+                {fav.description}
+              </span>
+            </Button>
+          </Tooltip>
+        );
+      })}
     </div>
   );
 }

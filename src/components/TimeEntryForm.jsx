@@ -24,6 +24,7 @@ export default function TimeEntryForm({
   suggestions,
   entries = [],
   settings,
+  selectedFavorite,
 }) {
   const { projects } = useContext(ProjectContext);
   const visibleProjects = projects.filter(p => !p.hidden);
@@ -49,6 +50,34 @@ export default function TimeEntryForm({
   const skipNextAutoSave = useRef(false);
   const lastSelectedDescription = useRef(null);
 
+  useEffect(() => {
+    if (!selectedFavorite) return;
+
+    const project = visibleProjects.find(
+      (p) => p.id === selectedFavorite.projectId
+    );
+    if (!project) return;
+
+    const startIso = new Date().toISOString();
+
+    // 🧩 neuen aktiven Eintrag setzen
+    const newEntry = {
+      id: Date.now(),
+      projectId: project.id,
+      projectName: project.name,
+      description: selectedFavorite.description,
+      start: startIso,
+      end: null,
+      activityId: selectedFavorite.activityId || "",
+    };
+
+    setSelectedProject(project);
+    setSelectedProjectId(project.id);
+    setSelectedActivityId(selectedFavorite.activityId || "");
+    setDescription(selectedFavorite.description || "");
+    setActiveEntry(newEntry);
+    setElapsed(0);
+  }, [selectedFavorite]);
 
   useEffect(() => {
     if (!barRef.current) return;
