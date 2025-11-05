@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, Tooltip } from "@nextui-org/react";
 import { Star, Play, Pause, Clock } from "lucide-react";
+import { useToast } from "./Toast";
 
 export default function FavoritesBar({
   entries = [],
@@ -9,6 +10,7 @@ export default function FavoritesBar({
   activeEntry,
 }) {
   const [favorites, setFavorites] = useState([]);
+  const { showToast } = useToast();
 
   /* ───────────── Favoriten kombinieren ───────────── */
   useEffect(() => {
@@ -80,7 +82,15 @@ export default function FavoritesBar({
 
   /* ───────────── Favorit auswählen ───────────── */
   function handleSelect(fav) {
-    if (!fav.projectId || !fav.description) return;
+    const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+    const project = projects.find(p => p.id === fav.projectId);
+
+    // ⛔ Projekt-Enddatum prüfen
+    if (project?.endDate && new Date(project.endDate) < new Date()) {
+      showToast("Projekt ist beendet", "OK", null, 3000, "warning");
+      return;
+    }
+
     onSelectFavorite?.(fav);
   }
 

@@ -128,14 +128,6 @@ export default function EditFavoriteModal({
             variant="bordered"
           />
 
-          {/* 🔸 Stunden */}
-          <Input
-            label="Stunden (optional)"
-            type="number"
-            value={form.hours}
-            onChange={(e) => handleChange("hours", e.target.value)}
-            variant="bordered"
-          />
         </ModalBody>
 
         <ModalFooter>

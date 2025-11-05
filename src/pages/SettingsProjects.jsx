@@ -155,7 +155,11 @@ export default function SettingsProjects({ onBack, settings }) {
             return (
               <Card
                 key={p.tempKey}
-                className="bg-slate-900/70 border border-slate-700 shadow-lg overflow-hidden transition-all mb-3"
+                className={`${
+                  p.endDate
+                    ? "bg-slate-800/60 border-slate-700 opacity-70"
+                    : "bg-slate-900/70 border-slate-700"
+                } shadow-lg overflow-hidden transition-all mb-3`}
               >
                 <CardBody className="space-y-3">
                   {/* 🔹 Header-Zeile */}
@@ -271,6 +275,67 @@ export default function SettingsProjects({ onBack, settings }) {
                           )
                         }
                       />
+
+                      <Input
+                        label="Projekt-Enddatum"
+                        type="date"
+                        value={p.endDate || ""}
+                        onChange={(e) =>
+                          setProjects((prev) =>
+                            prev.map((proj) =>
+                              proj.id === p.id
+                                ? { ...proj, endDate: e.target.value }
+                                : proj
+                            )
+                          )
+                        }
+                      />
+
+                      {/* 🔹 Buttons für Beenden / Reaktivieren */}
+                      <div className="flex gap-2 mt-2">
+                        {!p.endDate ? (
+                          <Button
+                            size="sm"
+                            color="danger"
+                            variant="flat"
+                            onPress={() => {
+                              const today = new Date().toISOString().split("T")[0];
+                              setProjects((prev) =>
+                                prev.map((proj) =>
+                                  proj.id === p.id ? { ...proj, endDate: today } : proj
+                                )
+                              );
+                              saveToLocalStorage(
+                                projects.map((proj) =>
+                                  proj.id === p.id ? { ...proj, endDate: today } : proj
+                                )
+                              );
+                            }}
+                          >
+                            Projekt beenden (heute)
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            color="success"
+                            onPress={() => {
+                              setProjects((prev) =>
+                                prev.map((proj) =>
+                                  proj.id === p.id ? { ...proj, endDate: "" } : proj
+                                )
+                              );
+                              saveToLocalStorage(
+                                projects.map((proj) =>
+                                  proj.id === p.id ? { ...proj, endDate: "" } : proj
+                                )
+                              );
+                            }}
+                          >
+                            Reaktivieren
+                          </Button>
+                        )}
+                      </div>
 
                       {/* 🧩 Tätigkeiten */}
                       <div className="border-t border-slate-700 mt-3 pt-3">

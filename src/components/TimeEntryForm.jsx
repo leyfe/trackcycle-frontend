@@ -16,6 +16,7 @@ import {
 import { ProjectContext } from "../context/ProjectContext";
 import { CustomerContext } from "../context/CustomerContext";
 import { Play, X } from "lucide-react";
+import { useToast } from "./Toast";
 
 export default function TimeEntryForm({
   onAdd,
@@ -49,6 +50,8 @@ export default function TimeEntryForm({
   const barRef = useRef(null);
   const skipNextAutoSave = useRef(false);
   const lastSelectedDescription = useRef(null);
+
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!selectedFavorite) return;
@@ -146,6 +149,13 @@ export default function TimeEntryForm({
   /* ───────────── Timer Start/Stop ───────────── */
   const startTimer = () => {
     if (!selectedProject || !description.trim()) return;
+
+      // ⛔ Prüfen, ob Projekt beendet ist
+    if (selectedProject.endDate && new Date(selectedProject.endDate) < new Date()) {
+      showToast("Projekt ist beendet", "OK", null, 3000, "warning");
+      return;
+    }
+    
     const startIso = showTimeInput ? customStartTime : new Date().toISOString();
     const newEntry = {
       id: Date.now(),

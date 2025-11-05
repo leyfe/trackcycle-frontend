@@ -60,10 +60,12 @@ export function ProjectProvider({ children }) {
     if (!project.id || !project.name) return;
 
     setProjects((prev) => {
-      // Prüfen, ob es bereits ein Projekt mit dieser ID gibt
       const exists = prev.some((p) => p.id === project.id);
       if (exists) return prev;
-      return [...prev, project];
+      const newProject = { ...project, endDate: project.endDate || null }; // 🟢 neu
+      const updated = [...prev, newProject];
+      localStorage.setItem("timetracko.projects", JSON.stringify(updated)); // speichern
+      return updated;
     });
   };
 
@@ -72,16 +74,37 @@ export function ProjectProvider({ children }) {
     setProjects((prev) => prev.filter((p) => p.id !== id));
   };
 
+  // ⛔ Projekt beenden
+  const endProject = (id, date = new Date().toISOString().split("T")[0]) => {
+    editProject(id, { endDate: date });
+  };
+
+  // 🔄 Projekt reaktivieren
+  const reactivateProject = (id) => {
+    editProject(id, { endDate: null });
+  };
+
   // ✏️ Projekt bearbeiten
   const editProject = (id, updatedFields) => {
-    setProjects((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...updatedFields } : p))
-    );
+    setProjects((prev) => {
+      const updated = prev.map((p) =>
+        p.id === id ? { ...p, ...updatedFields } : p
+      );
+      localStorage.setItem("timetracko.projects", JSON.stringify(updated)); // 🟢 speichern
+      return updated;
+    });
   };
 
   return (
     <ProjectContext.Provider
-      value={{ projects, addProject, deleteProject, editProject }}
+      value={{
+        projects,
+        addProject,
+        editProject,
+        deleteProject,
+        endProject,
+        reactivateProject,
+      }}
     >
       {children}
     </ProjectContext.Provider>
