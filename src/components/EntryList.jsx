@@ -143,6 +143,24 @@ export default function EntryList({
       showToast("Es läuft bereits ein Timer!", "OK", null, 5000, "warning");
       return;
     }
+
+    // 🔍 Projekt aus localStorage holen
+    const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+    const project = projects.find((p) => p.id === entry.projectId);
+
+    // ⛔ Projekt-Enddatum prüfen
+    if (project?.endDate && new Date(project.endDate) <= new Date()) {
+      showToast(
+        "Dieses Projekt ist beendet. Du kannst keine Zeit mehr darauf buchen.",
+        "OK",
+        null,
+        4000,
+        "warning"
+      );
+      return;
+    }
+
+    // ✅ Wenn alles passt, normalen Restart ausführen
     onRestart?.(entry);
   };
 
