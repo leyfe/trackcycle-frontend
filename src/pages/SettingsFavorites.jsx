@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardBody, Button, Input } from "@nextui-org/react";
+import { Card, CardBody, Button, Input, useDisclosure } from "@nextui-org/react";
 import { Edit3, Trash2, Save, PlusCircle } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import { useToast } from "../components/Toast";
+import EditFavoriteModal from "../components/modals/EditFavoriteModal";
 
 export default function SettingsFavorites({ entries = [], onBack, settings, onSettingsChange }) {
   const { showToast } = useToast();
   const [taskMap, setTaskMap] = useState({});
   const [sortedTasks, setSortedTasks] = useState([]);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedFavorite, setSelectedFavorite] = useState(null);
 
   /* ───────────── Tasks vorbereiten ───────────── */
   useEffect(() => {
@@ -72,11 +76,12 @@ export default function SettingsFavorites({ entries = [], onBack, settings, onSe
         <div className="flex justify-between items-start">
           <div className="min-w-0">
             <div className="text-sm font-medium text-slate-100 truncate">
-              {t.description || "(unbekannter Task)"}
+              {t?.description || "(unbekannter Task)"}
             </div>
             <div className="text-xs text-slate-400 truncate">
-              {getProjectName(t.projectId) || "–"}
+              {getProjectName(t?.projectId) || "–"}
             </div>
+
           </div>
 
           <div className="flex items-center gap-1">
@@ -84,10 +89,21 @@ export default function SettingsFavorites({ entries = [], onBack, settings, onSe
               isIconOnly
               size="sm"
               variant="light"
-              className={`text-slate-400 hover:text-${settings.accentColor}-400`}
-              onPress={() => setIsEditing((v) => !v)}
+              startContent={<Edit3 className="w-4 h-4" />}
+              className="text-slate-400 hover:text-slate-200"
+              onPress={() => {
+                const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+                const proj = projects.find((p) => p.id === t.projectId) || {};
+                setSelectedFavorite({
+                  customerId: proj.customerId || "",
+                  projectId: t.projectId || proj.id || "",
+                  description: t.description || "",
+                  activityId: t.activityId || "",
+                  hours: t.hours || "",
+                });
+                setEditModalOpen(true);
+              }}
             >
-              <Edit3 className="w-4 h-4" />
             </Button>
             <Button
               isIconOnly
@@ -166,7 +182,10 @@ export default function SettingsFavorites({ entries = [], onBack, settings, onSe
 
           <div className="space-y-2">
             {settings.manualFavorites.map((favKey, index) => {
-              const t = taskMap[favKey];
+              //const t = taskMap[favKey];
+              //const label = settings.customLabels?.[favKey] || "";
+              const details = settings.favoriteDetails?.[favKey];
+              const t = details || taskMap[favKey];
               const label = settings.customLabels?.[favKey] || "";
               return (
                 <FavoriteItem
@@ -204,26 +223,104 @@ export default function SettingsFavorites({ entries = [], onBack, settings, onSe
                     {getProjectName(t.projectId) || "–"}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="light"
-                  startContent={<PlusCircle className="w-4 h-4" />}
-                  className={`text-${settings.accentColor}-400 hover:text-${settings.accentColor}-300`}
-                  onPress={() => {
-                    onSettingsChange({
-                      ...settings,
-                      manualMode: true,
-                      manualFavorites: [...settings.manualFavorites, t.key],
-                    });
-                    showToast("Favorit hinzugefügt", "OK", null, 1500, "success");
-                  }}
-                >
-                  Hinzufügen
-                </Button>
+                <div className="flex">
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    startContent={<Edit3 className="w-4 h-4" />}
+                    className="text-slate-400 hover:text-slate-200"
+                    onPress={() => {
+                      setSelectedFavorite({
+                        ...t,
+                        customerId: t.customerId || "",
+                        activity: t.activity || "",
+                        hours: t.hours || "",
+                      });
+                      setEditModalOpen(true);
+                    }}
+                  >
+                  </Button>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    startContent={<PlusCircle className="w-4 h-4" />}
+                    className={`text-${settings.accentColor}-400 hover:text-${settings.accentColor}-300`}
+                    onPress={() => {
+                      onSettingsChange({
+                        ...settings,
+                        manualMode: true,
+                        manualFavorites: [...settings.manualFavorites, t.key],
+                      });
+                      showToast("Favorit hinzugefügt", "OK", null, 1500, "success");
+                    }}
+                  >
+                  </Button>
+                </div>
               </div>
             ))}
         </CardBody>
       </Card>
+
+      <EditFavoriteModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        favorite={selectedFavorite}
+        accentColor={settings.accentColor}
+        onSave={(updated) => {
+          const oldKey = `${selectedFavorite.projectId || ""}::${selectedFavorite.description || ""}`;
+          const newKey = `${updated.projectId || ""}::${updated.description || ""}`;
+
+          // 🔹 manuelle Favoriten aktualisieren oder ergänzen
+          let updatedFavorites = [...(settings.manualFavorites || [])];
+          if (!updatedFavorites.includes(newKey)) {
+            // Wenn neu oder aus „weitere Tasks“ kommt → hinzufügen
+            updatedFavorites.push(newKey);
+          }
+
+          // 🔹 Favoritendetails speichern oder updaten
+          const updatedDetails = {
+            ...(settings.favoriteDetails || {}),
+            [newKey]: {
+              customerId: updated.customerId || "",
+              projectId: updated.projectId || "",
+              activityId: updated.activityId || "",
+              description: updated.description || "",
+              hours: updated.hours || "",
+            },
+          };
+
+          // 🔹 alten Key löschen, falls geändert
+          if (oldKey !== newKey) {
+            delete updatedDetails[oldKey];
+          }
+
+          // 🔹 Labels aktualisieren (optional)
+          const updatedLabels = {
+            ...(settings.customLabels || {}),
+            [newKey]: updated.description || "",
+          };
+          if (oldKey !== newKey && settings.customLabels?.[oldKey]) {
+            delete updatedLabels[oldKey];
+          }
+
+          // 🔹 neues Settings-Objekt aufbauen
+          const nextSettings = {
+            ...settings,
+            manualFavorites: updatedFavorites,
+            favoriteDetails: updatedDetails,
+            customLabels: updatedLabels,
+          };
+
+          // 🔹 global speichern
+          onSettingsChange(nextSettings);
+          localStorage.setItem("timetracko.settings", JSON.stringify(nextSettings));
+
+          showToast("Favorit gespeichert", "OK", null, 2000, "success");
+        }}
+      />
+
     </div>
   );
 }

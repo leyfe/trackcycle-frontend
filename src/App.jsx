@@ -33,8 +33,11 @@ export default function App() {
       roundToQuarter: false,
       accentColor: "indigo",
       workdays: ["mon", "tue", "wed", "thu", "fri"],
+      favoriteDetails: stored.favoriteDetails || {},
+      ...stored,
     }
   );
+  const [selectedFavorite, setSelectedFavorite] = useState(null);
 
   const skipNextReset = useRef(false);
   const { projects } = useContext(ProjectContext);
@@ -162,12 +165,15 @@ export default function App() {
               suggestions={suggestions}
               entries={entries}
               settings={settings}
+              selectedFavorite={selectedFavorite}
             />
 
             <FavoritesBar
               entries={entries}
               settings={settings}
               activeEntry={activeEntry}
+              onSelectFavorite={(fav) => setSelectedFavorite(fav)} // 🧠 hier kommt der Trigger
+
               onSelect={(fav) =>
                 handleRestart({
                   projectId: fav.projectId,
