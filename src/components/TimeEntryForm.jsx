@@ -261,29 +261,20 @@ export default function TimeEntryForm({
             onSelectionChange={(key) => {
               if (!key) return;
 
-              if (lastSelectedDescription.current === key) return;
-              lastSelectedDescription.current = key;
+              // 🔹 Entschlüsseln
+              const [projectId, description] = key.split("::");
 
-              if (skipNextAutoSave.current) {
-                skipNextAutoSave.current = false;
-                return;
-              }
+              const project = visibleProjects.find((p) => p.id === projectId);
+              if (!project) return;
 
-              const item = suggestions.find((s) => s.description === key);
-              if (!item) return;
-
-              const project = visibleProjects.find((p) => p.id === item.projectId);
-              const projectId = project?.id || item.projectId;
-
-              setDescription(item.description);
-              setSelectedProject(project || null);
+              setDescription(description);
+              setSelectedProject(project);
               setSelectedProjectId(projectId);
 
-              // Default-Tätigkeit ermitteln
-              const defaultAct = project?.activities?.find((a) => a.isDefault);
+              const defaultAct = project.activities?.find((a) => a.isDefault);
               setSelectedActivityId(defaultAct?.id || "");
 
-              // Wenn bereits ein Timer läuft → abschließen
+              // Falls ein Timer läuft → abschließen
               if (activeEntry) {
                 const end = new Date().toISOString();
                 const duration =
@@ -291,13 +282,13 @@ export default function TimeEntryForm({
                 onAdd({ ...activeEntry, end, duration: duration.toFixed(2) });
               }
 
-              // Neuen Timer starten (nur EINMAL)
+              // ⏱ Neuen Timer starten
               const startIso = new Date().toISOString();
               const newEntry = {
                 id: Date.now(),
                 projectId,
-                projectName: project?.name || "Unbekannt",
-                description: item.description,
+                projectName: project.name,
+                description,
                 start: startIso,
                 end: null,
                 activityId: defaultAct?.id || selectedActivityId || "",
@@ -325,17 +316,17 @@ export default function TimeEntryForm({
           >
             {suggestions
               ?.filter((s) => {
-                // Falls kein Datum enthalten ist → behalten (optional)
                 if (!s.lastUsed) return true;
-
                 const lastUsedDate = new Date(s.lastUsed);
                 const daysSince = (Date.now() - lastUsedDate) / (1000 * 60 * 60 * 24);
-                return daysSince <= 31; // nur Einträge der letzten 31 Tage
+                return daysSince <= 31;
               })
               .map((s) => {
                 const project = projects.find((p) => p.id === s.projectId);
+                const value = `${s.projectId || "none"}::${s.description}`; // eindeutiger Wert
+
                 return (
-                  <AutocompleteItem key={s.description} textValue={s.description}>
+                  <AutocompleteItem key={value} textValue={s.description} value={value}>
                     <div className="flex flex-col">
                       <span>{s.description}</span>
                       <span className="text-xs text-slate-400">
