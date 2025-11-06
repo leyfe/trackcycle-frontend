@@ -323,22 +323,28 @@ export default function TimeEntryForm({
               }
             }}
           >
-            {suggestions?.map((s, i) => {
-              const project = projects.find((p) => p.id === s.projectId);
-              return (
-                <AutocompleteItem
-                  key={s.description} // eindeutiger, damit Keyboard funktioniert
-                  textValue={s.description}
-                >
-                  <div className="flex flex-col">
-                    <span>{s.description}</span>
-                    <span className="text-xs text-slate-400">
-                      {project?.name || "Projekt unbekannt"}
-                    </span>
-                  </div>
-                </AutocompleteItem>
-              );
-            })}
+            {suggestions
+              ?.filter((s) => {
+                // Falls kein Datum enthalten ist → behalten (optional)
+                if (!s.lastUsed) return true;
+
+                const lastUsedDate = new Date(s.lastUsed);
+                const daysSince = (Date.now() - lastUsedDate) / (1000 * 60 * 60 * 24);
+                return daysSince <= 31; // nur Einträge der letzten 31 Tage
+              })
+              .map((s) => {
+                const project = projects.find((p) => p.id === s.projectId);
+                return (
+                  <AutocompleteItem key={s.description} textValue={s.description}>
+                    <div className="flex flex-col">
+                      <span>{s.description}</span>
+                      <span className="text-xs text-slate-400">
+                        {project?.name || "Projekt unbekannt"}
+                      </span>
+                    </div>
+                  </AutocompleteItem>
+                );
+              })}
           </Autocomplete>
 
           {/* Projekt */}
