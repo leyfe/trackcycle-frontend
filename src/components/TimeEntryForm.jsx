@@ -252,7 +252,6 @@ export default function TimeEntryForm({
             placeholder="Was habe ich gemacht?"
             allowsCustomValue
             inputValue={description}
-            selectedKey={description}
             aria-label="Beschreibung hinzufügen"
             onInputChange={(val) => {
               setDescription(val);
