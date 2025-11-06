@@ -23,8 +23,8 @@ export default function EntryList({
   const { showToast } = useToast();
     
   // 🧩 Lade Projekt- und Kundendaten aus localStorage
-  const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
-  const customers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
+  const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
+  const customers = JSON.parse(localStorage.getItem("trackcycle.customers") || "[]");
 
   // 🗺 Mapping-Objekte für schnellen Zugriff
   const projById = Object.fromEntries(projects.map(p => [p.id, p]));
@@ -145,7 +145,7 @@ export default function EntryList({
     }
 
     // 🔍 Projekt aus localStorage holen
-    const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+    const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
     const project = projects.find((p) => p.id === entry.projectId);
 
     // ⛔ Projekt-Enddatum prüfen

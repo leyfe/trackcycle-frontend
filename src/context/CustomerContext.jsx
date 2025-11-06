@@ -6,7 +6,7 @@ export const CustomerContext = createContext();
 export const CustomerProvider = ({ children }) => {
     const [customers, setCustomers] = useState(() => {
     return (
-      JSON.parse(localStorage.getItem("timetracko.customers")) || [
+      JSON.parse(localStorage.getItem("trackcycle.customers")) || [
         {
           id: "C-0001",
           name: "Salient Doremus",
@@ -19,7 +19,7 @@ export const CustomerProvider = ({ children }) => {
   const { showToast } = useToast();
 
   useEffect(() => {
-    localStorage.setItem("timetracko.customers", JSON.stringify(customers));
+    localStorage.setItem("trackcycle.customers", JSON.stringify(customers));
   }, [customers]);
 
   const addCustomer = (id, name) => {
@@ -42,7 +42,7 @@ export const CustomerProvider = ({ children }) => {
       () => {
         const restored = [deletedEntry, ...updatedEntries];
         setEntries(restored);
-        localStorage.setItem("timetracko.entries", JSON.stringify(restored));
+        localStorage.setItem("trackcycle.entries", JSON.stringify(restored));
       },
       5000
     );

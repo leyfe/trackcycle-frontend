@@ -9,12 +9,12 @@ export function ProjectProvider({ children }) {
     // 🔹 Aus localStorage laden
     let stored = [];
     try {
-      stored = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+      stored = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
     } catch {
       stored = [];
     }
 
-    
+
     if (Array.isArray(stored) && stored.length > 0) {
       // Duplikate nach ID entfernen
       const unique = stored.filter(
@@ -46,11 +46,11 @@ export function ProjectProvider({ children }) {
     const unique = projects.filter(
       (p, i, self) => i === self.findIndex((x) => x.id === p.id)
     );
-    localStorage.setItem("timetracko.projects", JSON.stringify(unique));
+    localStorage.setItem("trackcycle.projects", JSON.stringify(unique));
   }, [projects]);
 
   useEffect(() => {
-    const projects = JSON.parse(localStorage.getItem("timetracko.projects")) || [];
+    const projects = JSON.parse(localStorage.getItem("trackcycle.projects")) || [];
     if (!projects.find(p => p.id === "PAUSE")) {
       projects.push({
         id: "PAUSE",
@@ -58,7 +58,7 @@ export function ProjectProvider({ children }) {
         client: "System",
         description: "Zeit, die nicht als Arbeit zählt",
       });
-      localStorage.setItem("timetracko.projects", JSON.stringify(projects));
+      localStorage.setItem("trackcycle.projects", JSON.stringify(projects));
     }
   }, []);
 
@@ -71,7 +71,7 @@ export function ProjectProvider({ children }) {
       if (exists) return prev;
       const newProject = { ...project, endDate: project.endDate || null }; // 🟢 neu
       const updated = [...prev, newProject];
-      localStorage.setItem("timetracko.projects", JSON.stringify(updated)); // speichern
+      localStorage.setItem("trackcycle.projects", JSON.stringify(updated)); // speichern
       return updated;
     });
   };
@@ -97,7 +97,7 @@ export function ProjectProvider({ children }) {
       const updated = prev.map((p) =>
         p.id === id ? { ...p, ...updatedFields } : p
       );
-      localStorage.setItem("timetracko.projects", JSON.stringify(updated)); // 🟢 speichern
+      localStorage.setItem("trackcycle.projects", JSON.stringify(updated)); // 🟢 speichern
       return updated;
     });
   };

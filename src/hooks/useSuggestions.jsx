@@ -4,7 +4,7 @@ import { ProjectContext } from "../context/ProjectContext";
 export default function useSuggestions(entries) {
   const { projects } = useContext(ProjectContext); // 🔹 Zugriff auf aktuelle Projekte
   const [suggestions, setSuggestions] = useState(() => {
-    return JSON.parse(localStorage.getItem("timetracko.suggestions")) || [];
+    return JSON.parse(localStorage.getItem("trackcycle.suggestions")) || [];
   });
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function useSuggestions(entries) {
 
     setSuggestions(newSuggestions);
     localStorage.setItem(
-      "timetracko.suggestions",
+      "trackcycle.suggestions",
       JSON.stringify(newSuggestions)
     );
   }, [entries, projects]); // 🔹 reagiert auch auf Projektänderungen

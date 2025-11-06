@@ -13,7 +13,7 @@ export default function FavoritesBar({
 
   /* ───────────── Favoriten kombinieren ───────────── */
   useEffect(() => {
-    const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+    const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
 
     const entryMap = entries.reduce((acc, e) => {
       const key = `${e.projectId}::${e.description}`;
@@ -71,7 +71,7 @@ export default function FavoritesBar({
 
   /* ───────────── Favorit auswählen ───────────── */
   function handleSelect(fav) {
-    const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+    const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
     const project = projects.find((p) => p.id === fav.projectId);
 
     if (project?.endDate && new Date(project.endDate) < new Date()) {

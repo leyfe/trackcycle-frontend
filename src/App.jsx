@@ -16,10 +16,10 @@ import EditTaskModal from "./components/modals/EditTaskModal";
 export default function App() {
   // 🧠 Lokaler State
   const [entries, setEntries] = useState(() => {
-    const stored = JSON.parse(localStorage.getItem("timetracko.entries")) || [];
+    const stored = JSON.parse(localStorage.getItem("trackcycle.entries")) || [];
     return stored.sort((a, b) => new Date(b.start) - new Date(a.start));
   });
-const storedSettings = JSON.parse(localStorage.getItem("timetracko.settings")) || {}; 
+const storedSettings = JSON.parse(localStorage.getItem("trackcycle.settings")) || {}; 
   const [activeEntry, setActiveEntry] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editTask, setEditTask] = useState(null);
@@ -48,12 +48,12 @@ const storedSettings = JSON.parse(localStorage.getItem("timetracko.settings")) |
 
   // 🧠 Änderungen persistieren
   useEffect(() => {
-    localStorage.setItem("timetracko.entries", JSON.stringify(entries));
+    localStorage.setItem("trackcycle.entries", JSON.stringify(entries));
   }, [entries]);
 
   const handleSettingsChange = (updatedSettings) => {
     setSettings(updatedSettings);
-    localStorage.setItem("timetracko.settings", JSON.stringify(updatedSettings));
+    localStorage.setItem("trackcycle.settings", JSON.stringify(updatedSettings));
   };
 
   // ➕ Neuer Eintrag
@@ -268,6 +268,6 @@ const storedSettings = JSON.parse(localStorage.getItem("timetracko.settings")) |
 
 // 🎨 Accent-Farbe für Komponenten
 export function useAccentColor() {
-  const stored = JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
+  const stored = JSON.parse(localStorage.getItem("trackcycle.settings") || "{}");
   return stored.accentColor || "indigo";
 }

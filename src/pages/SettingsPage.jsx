@@ -49,6 +49,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
         manualMode: false,
         manualFavorites: [],
         customLabels: {},
+        accentColor: "indigo",
     });
 
     const [showConaktivExport, setShowConaktivExport] = useState(false);
@@ -64,7 +65,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
 
     // 🔹 Settings laden
     useEffect(() => {
-        const stored = localStorage.getItem("timetracko.settings");
+        const stored = localStorage.getItem("trackcycle.settings");
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
@@ -79,7 +80,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
     // 🔹 Settings speichern
     useEffect(() => {
         if (!settingsLoaded) return;
-        localStorage.setItem("timetracko.settings", JSON.stringify(settings));
+        localStorage.setItem("trackcycle.settings", JSON.stringify(settings));
         onSettingsChange?.(settings);
     }, [settings, settingsLoaded]);
 
@@ -219,7 +220,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
                 onChange={(color) => {
                     const newSettings = { ...settings, accentColor: color };
                     setSettings(newSettings);
-                    localStorage.setItem("timetracko.settings", JSON.stringify(newSettings));
+                    localStorage.setItem("trackcycle.settings", JSON.stringify(newSettings));
                     console.log(settings.accentColor)
                 }}
             />

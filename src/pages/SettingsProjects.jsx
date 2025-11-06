@@ -16,6 +16,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
+import { safeUUID } from "../utils/uuid";
 import ActivityModal from "../components/modals/ActivityModal";
 
 export default function SettingsProjects({ onBack, settings }) {
@@ -26,24 +27,24 @@ export default function SettingsProjects({ onBack, settings }) {
   const [expandedProjects, setExpandedProjects] = useState([]);
 
   useEffect(() => {
-    const storedProjects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+    const storedProjects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
     // jedem Projekt einen stabilen UI-Key geben (falls noch keiner existiert)
     const projectsWithKeys = storedProjects.map(p => ({
       ...p,
-      tempKey: p.tempKey || crypto.randomUUID(),
+      tempKey: p.tempKey || safeUUID(),
     }));
     setProjects(projectsWithKeys);
 
-    setCustomers(JSON.parse(localStorage.getItem("timetracko.customers") || "[]"));
+    setCustomers(JSON.parse(localStorage.getItem("trackcycle.customers") || "[]"));
   }, []);
 
   const saveToLocalStorage = (data) => {
-    localStorage.setItem("timetracko.projects", JSON.stringify(data));
+    localStorage.setItem("trackcycle.projects", JSON.stringify(data));
   };
 
   const handleSaveAll = () => {
     const cleanProjects = projects.map(({ tempKey, ...rest }) => rest);
-    localStorage.setItem("timetracko.projects", JSON.stringify(cleanProjects));
+    localStorage.setItem("trackcycle.projects", JSON.stringify(cleanProjects));
     onBack?.();
   };
 
@@ -54,7 +55,7 @@ export default function SettingsProjects({ onBack, settings }) {
 
   const handleAddProject = () => {
     const newProject = {
-      tempKey: crypto.randomUUID(),
+      tempKey: safeUUID(),
       id: "",
       name: "",
       projectId: "",

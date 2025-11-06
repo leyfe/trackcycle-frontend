@@ -34,14 +34,14 @@ export default function SettingsFavorites({ entries = [], onBack, settings, onSe
 
   /* ───────────── Settings speichern ───────────── */
   useEffect(() => {
-    localStorage.setItem("timetracko.settings", JSON.stringify(settings));
+    localStorage.setItem("trackcycle.settings", JSON.stringify(settings));
   }, [settings]);
 
   /* ───────────── Projektname holen ───────────── */
   function getProjectName(projectId) {
     if (!projectId) return null;
     try {
-      const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+      const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
       const project = projects.find((p) => p.id === projectId);
       return project?.name || null;
     } catch {
@@ -92,7 +92,7 @@ export default function SettingsFavorites({ entries = [], onBack, settings, onSe
               startContent={<Edit3 className="w-4 h-4" />}
               className="text-slate-400 hover:text-slate-200"
               onPress={() => {
-                const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+                const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
                 const proj = projects.find((p) => p.id === t.projectId) || {};
                 setSelectedFavorite({
                   customerId: proj.customerId || "",
@@ -315,7 +315,7 @@ export default function SettingsFavorites({ entries = [], onBack, settings, onSe
 
           // 🔹 global speichern
           onSettingsChange(nextSettings);
-          localStorage.setItem("timetracko.settings", JSON.stringify(nextSettings));
+          localStorage.setItem("trackcycle.settings", JSON.stringify(nextSettings));
 
           showToast("Favorit gespeichert", "OK", null, 2000, "success");
         }}

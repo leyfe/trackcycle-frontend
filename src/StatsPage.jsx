@@ -29,7 +29,7 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   /* ────────────── SETTINGS ────────────── */
   const storedSettings = (() => {
     try {
-      return JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
+      return JSON.parse(localStorage.getItem("trackcycle.settings") || "{}");
     } catch {
       return {};
     }
@@ -152,7 +152,7 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
 
   /* ────────────── PROJEKTVERTEILUNG ────────────── */
   // 🧩 Projekte aus LocalStorage laden
-  const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+  const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
   const projById = Object.fromEntries(projects.map(p => [p.id, p]));
   const projectData = useMemo(() => {
     const projMap = {};
