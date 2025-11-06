@@ -19,24 +19,22 @@ export default function App() {
     const stored = JSON.parse(localStorage.getItem("timetracko.entries")) || [];
     return stored.sort((a, b) => new Date(b.start) - new Date(a.start));
   });
-
+const storedSettings = JSON.parse(localStorage.getItem("timetracko.settings")) || {}; 
   const [activeEntry, setActiveEntry] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [activeTab, setActiveTab] = useState("home");
-  const [settings, setSettings] = useState(
-    JSON.parse(localStorage.getItem("timetracko.settings")) || {
-      showFavorites: true,
-      manualMode: false,
-      manualFavorites: [],
-      customLabels: {},
-      roundToQuarter: false,
-      accentColor: "indigo",
-      workdays: ["mon", "tue", "wed", "thu", "fri"],
-      favoriteDetails: stored.favoriteDetails || {},
-      ...stored,
-    }
-  );
+  const [settings, setSettings] = useState({
+  showFavorites: true,
+  manualMode: false,
+  manualFavorites: [],
+  customLabels: {},
+  roundToQuarter: false,
+  accentColor: "indigo",
+  workdays: ["mon", "tue", "wed", "thu", "fri"],
+  favoriteDetails: storedSettings.favoriteDetails || {},
+  ...storedSettings,
+});
   const [selectedFavorite, setSelectedFavorite] = useState(null);
 
   const skipNextReset = useRef(false);

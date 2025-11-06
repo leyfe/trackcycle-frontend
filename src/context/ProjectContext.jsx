@@ -7,8 +7,15 @@ export function ProjectProvider({ children }) {
 
   const [projects, setProjects] = useState(() => {
     // 🔹 Aus localStorage laden
-    const stored = JSON.parse(localStorage.getItem("timetracko.projects"));
-    if (stored && Array.isArray(stored) && stored.length > 0) {
+    let stored = [];
+    try {
+      stored = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+    } catch {
+      stored = [];
+    }
+
+    
+    if (Array.isArray(stored) && stored.length > 0) {
       // Duplikate nach ID entfernen
       const unique = stored.filter(
         (p, i, self) => i === self.findIndex((x) => x.id === p.id)

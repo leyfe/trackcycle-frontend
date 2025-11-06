@@ -8,11 +8,11 @@ import { ToastProvider } from "./components/Toast";
 import App from "./App.jsx";
 import "./index.css";
 
-// main.jsx
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
+
+if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/sw.js", { type: "module" })
+      .register("/sw.js", { type: "module" }) // <-- wichtig!
       .then(() => console.log("✅ Service Worker registriert"))
       .catch((err) => console.error("❌ SW-Fehler", err));
   });

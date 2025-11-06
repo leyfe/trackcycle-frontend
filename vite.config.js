@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: "dist",
+    emptyOutDir: true,
     assetsDir: "assets",
     manifest: true, // hilft beim PWA-Refresh
     chunkSizeWarningLimit: 2000,
