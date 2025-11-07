@@ -1,8 +1,16 @@
 {
   "short_name": "TrackCycle",
   "name": "TrackCycle by Cyclehub",
-  "start_url": ".",
+  "start_url": "/track/",
+  "scope": "/track/",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#6366f1"
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/track/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
