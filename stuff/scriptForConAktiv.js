@@ -1,12 +1,68 @@
 const entries = [
   {
-    "date": "4.11.2025",
+    "date": "6.11.2025",
+    "hours": "0,00",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Organisation",
+    "description": "E-Mails"
+  },
+  {
+    "date": "6.11.2025",
+    "hours": "0,25",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Organisation",
+    "description": "Todo/Status Check"
+  },
+  {
+    "date": "6.11.2025",
+    "hours": "1,75",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "Openforms | Formsvista Analyse"
+  },
+  {
+    "date": "6.11.2025",
+    "hours": "3,50",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Aufräumen",
+    "description": "Openforms QA (Labels)"
+  },
+  {
+    "date": "6.11.2025",
+    "hours": "0,25",
+    "customer": "Commerzbank AG",
+    "project": "Com.4534",
+    "activity": "Tech. Projektmanager FeLe",
+    "description": "E-Mail-Postfach"
+  },
+  {
+    "date": "6.11.2025",
+    "hours": "0,75",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Organisation",
+    "description": "Administration"
+  },
+  {
+    "date": "6.11.2025",
+    "hours": "0,50",
+    "customer": "Salient GmbH",
+    "project": "sal.3465",
+    "activity": "Bewerbungen, Personalbespr., Meetings, S&S",
+    "description": "Daily Huddle"
+  },
+  {
+    "date": "6.11.2025",
     "hours": "1,00",
     "customer": "Commerzbank AG",
-    "project": "Com.4645",
+    "project": "Com.4534",
     "activity": "Tech. Projektmanager FeLe",
-    "description": "Mail Matthias Wenzelberger"
-  },
+    "description": "Coba Schulung"
+  }
 ];
 
 // 🧩 Eingabe-Helfer
