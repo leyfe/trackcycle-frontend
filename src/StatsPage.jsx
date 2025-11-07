@@ -4,6 +4,7 @@ import {
   CardBody,
   Button,
   Dropdown,
+  Tooltip,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
@@ -12,7 +13,7 @@ import {
   BarChart,
   Bar,
   XAxis,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -28,7 +29,7 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   /* ────────────── SETTINGS ────────────── */
   const storedSettings = (() => {
     try {
-      return JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
+      return JSON.parse(localStorage.getItem("trackcycle.settings") || "{}");
     } catch {
       return {};
     }
@@ -39,6 +40,7 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   const workdays = settings.workdays ?? ["mon", "tue", "wed", "thu", "fri"];
 
   const [timeframe, setTimeframe] = useState("7d");
+  const [monthlyGoal, setMonthlyGoal] = useState(120);
 
   const pauseEntries = entries.filter(e => e.projectId === "PAUSE");
   const totalPauseHours = pauseEntries.reduce((s, e) => s + (parseFloat(e.duration) || 0), 0);
@@ -88,6 +90,37 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   const totalHours = totalMinutes / 60;
   const avgHours = totalDays ? (totalHours / totalDays).toFixed(2) : "0.00";
   const perfectDays = Object.values(dailyTotals).filter((m) => m / 60 >= 8).length;
+
+    // 🔹 Wochenvergleich
+  const calcTotalHours = (fromDays, toDays) => {
+    const now = new Date();
+    const from = new Date();
+    from.setDate(now.getDate() - toDays);
+    const to = new Date();
+    to.setDate(now.getDate() - fromDays);
+
+    return entries
+      .filter(e => {
+        const d = new Date(e.start);
+        return d >= from && d < to && e.projectId !== "PAUSE";
+      })
+      .reduce((sum, e) => sum + (parseFloat(e.duration) || 0), 0);
+  };
+
+  const thisWeekHours = calcTotalHours(0, 7);
+  const lastWeekHours = calcTotalHours(7, 14);
+  const diffPercent = lastWeekHours
+    ? ((thisWeekHours - lastWeekHours) / lastWeekHours) * 100
+    : 0;
+
+  // 🔹 Monatsziel
+  const currentMonthHours = entries
+    .filter(e => new Date(e.start).getMonth() === new Date().getMonth())
+    .reduce((sum, e) => sum + (parseFloat(e.duration) || 0), 0);
+
+  const goalPercent = Math.min((currentMonthHours / monthlyGoal) * 100, 100);
+  const remaining = Math.max(monthlyGoal - currentMonthHours, 0);
+
   const streak = calcStreak(workEntries);
   const focusScore = calcFocus(workEntries);
 
@@ -119,7 +152,7 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
 
   /* ────────────── PROJEKTVERTEILUNG ────────────── */
   // 🧩 Projekte aus LocalStorage laden
-  const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+  const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
   const projById = Object.fromEntries(projects.map(p => [p.id, p]));
   const projectData = useMemo(() => {
     const projMap = {};
@@ -190,9 +223,47 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard icon={<Flame />} label="Streak" value={`${streak} Tage`} accentColor={settings.accentColor} />
         <StatCard icon={<Diamond />} label="Perfekte Tage" value={perfectDays} accentColor={settings.accentColor} />
-        <StatCard icon={<Brain />} label="Fokus-Score" value={`${focusScore}%`} accentColor={settings.accentColor} />
+        <StatCard
+          icon={
+            <Tooltip
+              content="Berechnet aus Pausenintervallen, Fokusphasen und Projektwechseln"
+              placement="bottom"
+              className="max-w-[220px] text-xs"
+            >
+              <Brain className="cursor-help" />
+            </Tooltip>
+          }
+          label="Fokus-Score"
+          value={`${focusScore}%`}
+          accentColor={settings.accentColor}
+        />        
         <StatCard icon={<Clock />} label="Ø Arbeitszeit" value={`${avgHours} h`} accentColor={settings.accentColor} />
       </div>
+
+      {/* Wochenvergleich + Monatsziel */}
+      <Card className="bg-slate-900/70 border border-slate-700">
+        <CardBody>
+          <h2 className="text-slate-100 font-semibold mb-3">Trends & Fortschritt</h2>
+          <div className="text-slate-300 text-sm mb-3">
+            {diffPercent >= 0
+              ? `📈 +${diffPercent.toFixed(1)} % im Vergleich zur Vorwoche`
+              : `📉 ${diffPercent.toFixed(1)} % weniger als letzte Woche`}
+          </div>
+
+          <div className="text-slate-400 text-sm mb-2">
+            Monatsziel: {monthlyGoal} h
+          </div>
+          <div className="w-full bg-slate-800 rounded-lg h-3 mb-1">
+            <div
+              className={`h-3 rounded-lg bg-${settings.accentColor}-500 transition-all`}
+              style={{ width: `${goalPercent}%` }}
+            />
+          </div>
+          <div className="text-xs text-slate-500">
+            {goalPercent.toFixed(0)} % erreicht • {remaining.toFixed(1)} h verbleibend
+          </div>
+        </CardBody>
+      </Card>
 
       {/* Wochenbalken */}
       <Card className="bg-slate-900/70 border border-slate-700">
@@ -201,7 +272,7 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={weeklyData}>
               <XAxis dataKey="day" tick={{ fill: "#94a3b8" }} />
-              <Tooltip
+              <RechartsTooltip
                 formatter={(v, _, { payload }) =>
                   payload.isWorkday
                     ? `${v} h`
@@ -254,7 +325,7 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
+              <RechartsTooltip
                 formatter={(v) => `${v} h`}
                 contentStyle={{
                   backgroundColor: "#1e293b",

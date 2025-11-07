@@ -1,5 +1,5 @@
 const CACHE_VERSION = import.meta.env.VITE_APP_VERSION;
-const CACHE_NAME = `trakko-cache-${CACHE_VERSION}`;
+const CACHE_NAME = `trackcycle-cache-${CACHE_VERSION}`;
 
 self.addEventListener("install", (event) => {
   console.log("[SW] Install event – caching app shell");
@@ -17,7 +17,7 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key.startsWith("trakko-cache-") && key !== CACHE_NAME)
+          .filter((key) => key.startsWith("trackcycle-cache-") && key !== CACHE_NAME)
           .map((key) => caches.delete(key))
       )
     )

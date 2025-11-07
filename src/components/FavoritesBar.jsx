@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button, Tooltip } from "@nextui-org/react";
-import { Star, Play, Pause, Clock } from "lucide-react";
+import { useToast } from "./Toast";
 
 export default function FavoritesBar({
   entries = [],
@@ -9,12 +9,12 @@ export default function FavoritesBar({
   activeEntry,
 }) {
   const [favorites, setFavorites] = useState([]);
+  const { showToast } = useToast();
 
   /* ───────────── Favoriten kombinieren ───────────── */
   useEffect(() => {
-    const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
+    const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
 
-    // 🔹 Map aus entries erstellen (zum Fallback)
     const entryMap = entries.reduce((acc, e) => {
       const key = `${e.projectId}::${e.description}`;
       if (!acc[key]) {
@@ -34,13 +34,10 @@ export default function FavoritesBar({
 
     let favoritesList = [];
 
-    // 🟢 Wenn manuelle Favoriten vorhanden → nimm diese (mit Fallback auf entries)
     if (settings.manualFavorites?.length > 0) {
       favoritesList = settings.manualFavorites
         .map((key) => {
-          // 1️⃣ versuche Details aus favoriteDetails zu holen
           const f = settings.favoriteDetails?.[key];
-
           if (f) {
             const proj = projects.find((p) => p.id === f.projectId);
             return {
@@ -55,21 +52,15 @@ export default function FavoritesBar({
             };
           }
 
-          // 2️⃣ falls keine Details gespeichert → Fallback aus entries
           const fromEntry = entryMap[key];
           if (fromEntry) {
-            return {
-              ...fromEntry,
-              source: "manual-fallback",
-            };
+            return { ...fromEntry, source: "manual-fallback" };
           }
 
-          // 3️⃣ falls gar nichts gefunden → null
           return null;
         })
         .filter(Boolean);
     } else {
-      // 🔹 Fallback: häufige Tasks aus entries, wenn keine Favoriten existieren
       favoritesList = Object.values(entryMap)
         .sort((a, b) => b.count - a.count)
         .slice(0, 8);
@@ -80,7 +71,14 @@ export default function FavoritesBar({
 
   /* ───────────── Favorit auswählen ───────────── */
   function handleSelect(fav) {
-    if (!fav.projectId || !fav.description) return;
+    const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
+    const project = projects.find((p) => p.id === fav.projectId);
+
+    if (project?.endDate && new Date(project.endDate) < new Date()) {
+      showToast("Projekt ist beendet", "OK", null, 3000, "warning");
+      return;
+    }
+
     onSelectFavorite?.(fav);
   }
 
@@ -88,7 +86,13 @@ export default function FavoritesBar({
   if (!settings.showFavorites || favorites.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 mt-2">
+    <div
+      className="
+        flex items-center gap-2 mt-2 
+        overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800
+        px-1 py-1 rounded-lg
+      "
+    >
       {favorites.map((fav, index) => {
         const isActive =
           activeEntry &&
@@ -107,9 +111,11 @@ export default function FavoritesBar({
               onPress={() => handleSelect(fav)}
               size="sm"
               variant={isActive ? "solid" : "flat"}
-              className={`transition-all border border-slate-700 bg-slate-800/50 hover:bg-slate-700/60 text-slate-200`}
+              className={`!min-w-fit transition-all border border-slate-700 
+                bg-slate-800/50 hover:bg-slate-700/60 text-slate-200 px-3 py-1
+              `}
             >
-              <span className="truncate max-w-[130px] text-xs font-medium">
+              <span className="truncate max-w-[140px] text-xs font-medium">
                 {fav.description}
               </span>
             </Button>

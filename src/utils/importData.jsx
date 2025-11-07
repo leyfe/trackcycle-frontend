@@ -17,10 +17,10 @@ export function importAllData(file, onSuccess) {
         };
       });
 
-      localStorage.setItem("timetracko.entries", JSON.stringify(cleanedEntries));
-      localStorage.setItem("timetracko.projects", JSON.stringify(projects));
-      localStorage.setItem("timetracko.customers", JSON.stringify(customers));
-      localStorage.setItem("timetracko.settings", JSON.stringify(data.settings || {}));
+      localStorage.setItem("trackcycle.entries", JSON.stringify(cleanedEntries));
+      localStorage.setItem("trackcycle.projects", JSON.stringify(projects));
+      localStorage.setItem("trackcycle.customers", JSON.stringify(customers));
+      localStorage.setItem("trackcycle.settings", JSON.stringify(data.settings || {}));
 
       onSuccess?.();
     } catch (err) {

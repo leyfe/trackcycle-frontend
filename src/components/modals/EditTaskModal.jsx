@@ -50,6 +50,7 @@ export default function EditTaskModal({ isOpen, onClose, task, onSave, projects 
       alert("Bitte mindestens Beschreibung und Projekt angeben.");
       return;
     }
+
     if (!date || !startTime || !endTime) {
       alert("Bitte Datum, Start- und Endzeit angeben.");
       return;
@@ -65,12 +66,23 @@ export default function EditTaskModal({ isOpen, onClose, task, onSave, projects 
 
     const duration = (ms / 1000 / 60 / 60).toFixed(2);
 
-    onSave({
+    // 🆕 Tätigkeit aus dem Formular übernehmen (falls vorhanden)
+    const updatedActivityId =
+      editedTask.activityId !== undefined
+        ? editedTask.activityId
+        : editedTask.activity?.id || "";
+
+    // 🧩 Aktualisiertes Task-Objekt zusammensetzen
+    const updatedTask = {
       ...editedTask,
       start: startISO,
       end: endISO,
       duration,
-    });
+      activityId: updatedActivityId,
+    };
+
+    // 🧠 zurückgeben
+    onSave(updatedTask);
     onClose();
   };
 
@@ -123,6 +135,21 @@ export default function EditTaskModal({ isOpen, onClose, task, onSave, projects 
                     ))}
                   </SelectSection>
                 ))}
+              </Select>
+
+              <Select
+                label="Tätigkeit"
+                placeholder="Tätigkeit auswählen"
+                selectedKeys={[editedTask.activityId || ""]}
+                onChange={(e) => setEditedTask((prev) => ({ ...prev, activityId: e.target.value }))}
+              >
+                {projects
+                  .find((p) => p.id === editedTask.projectId)
+                  ?.activities?.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.label}
+                    </SelectItem>
+                  ))}
               </Select>
 
               {/* 📅 Datum + Zeiten nebeneinander */}

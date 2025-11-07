@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input } from "@nextui-org/react";
+import { safeUUID } from "../../utils/uuid";
 
 export default function ActivityModal({ isOpen, onClose, onSave }) {
   const [label, setLabel] = useState("");
@@ -8,7 +9,7 @@ export default function ActivityModal({ isOpen, onClose, onSave }) {
   const handleSave = () => {
     if (!label.trim()) return;
     onSave({
-      id: id.trim() || crypto.randomUUID(),
+      id: id.trim() || safeUUID(),
       label: label.trim(),
       isDefault: false,
     });

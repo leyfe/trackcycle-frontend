@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button, Input, Card, CardBody } from "@nextui-org/react";
 import { Plus, Save, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import PageHeader from "../components/PageHeader";
+import { safeUUID } from "../utils/uuid";
 
 export default function SettingsCustomers({ onBack, settings }) {
   const [customers, setCustomers] = useState([]);
@@ -9,16 +10,16 @@ export default function SettingsCustomers({ onBack, settings }) {
 
   // 🔹 Laden + stabile tempKeys hinzufügen
   useEffect(() => {
-    const storedCustomers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
+    const storedCustomers = JSON.parse(localStorage.getItem("trackcycle.customers") || "[]");
     const customersWithKeys = storedCustomers.map(c => ({
       ...c,
-      tempKey: c.tempKey || crypto.randomUUID(), // ✅ stabiler UI-Key
+      tempKey: c.tempKey || safeUUID(),
     }));
     setCustomers(customersWithKeys);
   }, []);
 
   const saveToLocalStorage = (data) => {
-    localStorage.setItem("timetracko.customers", JSON.stringify(data));
+    localStorage.setItem("trackcycle.customers", JSON.stringify(data));
   };
 
   const handleSaveAll = () => {
@@ -36,7 +37,7 @@ export default function SettingsCustomers({ onBack, settings }) {
 
   const handleAddCustomer = () => {
     const newCustomer = {
-      tempKey: crypto.randomUUID(),
+      tempKey: safeUUID(),
       id: "",
       name: "",
     };

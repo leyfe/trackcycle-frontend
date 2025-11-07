@@ -7,10 +7,10 @@ export function exportAllData() {
   };
 
   // Alle Daten laden
-  const entries   = safeParse("timetracko.entries",   []);
-  const projects  = safeParse("timetracko.projects",  []);
-  const customers = safeParse("timetracko.customers", []);
-  const settings  = safeParse("timetracko.settings",  {
+  const entries   = safeParse("trackcycle.entries",   []);
+  const projects  = safeParse("trackcycle.projects",  []);
+  const customers = safeParse("trackcycle.customers", []);
+  const settings  = safeParse("trackcycle.settings",  {
     showFavorites: true, manualMode: false, manualFavorites: [], customLabels: {}
   });
 
@@ -29,15 +29,15 @@ export function exportAllData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `TimeTracko_Backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `TrackCycle_Backup_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 export function exportEntriesCSV() {
-  const entries   = JSON.parse(localStorage.getItem("timetracko.entries")   || "[]");
-  const projects  = JSON.parse(localStorage.getItem("timetracko.projects")  || "[]");
-  const customers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
+  const entries   = JSON.parse(localStorage.getItem("trackcycle.entries")   || "[]");
+  const projects  = JSON.parse(localStorage.getItem("trackcycle.projects")  || "[]");
+  const customers = JSON.parse(localStorage.getItem("trackcycle.customers") || "[]");
 
   const projById = Object.fromEntries(projects.map(p => [p.id, p]));
   const custById = Object.fromEntries(customers.map(c => [c.id, c]));
@@ -78,10 +78,10 @@ export function exportEntriesCSV() {
 
 // 🔧 In src/utils/exportData.js
 export function exportEntriesConaktiv({ mode = "day", startDate, endDate } = {}) {
-  const entries = JSON.parse(localStorage.getItem("timetracko.entries") || "[]");
-  const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
-  const customers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
-  const settings = JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
+  const entries = JSON.parse(localStorage.getItem("trackcycle.entries") || "[]");
+  const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
+  const customers = JSON.parse(localStorage.getItem("trackcycle.customers") || "[]");
+  const settings = JSON.parse(localStorage.getItem("trackcycle.settings") || "{}");
   const activities = projects.flatMap(p =>(p.activities || []).map(a => ({ ...a, projectId: p.id }))  );
 
   const projById = Object.fromEntries(projects.map((p) => [p.id, p]));

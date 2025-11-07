@@ -23,8 +23,8 @@ export default function EntryList({
   const { showToast } = useToast();
     
   // 🧩 Lade Projekt- und Kundendaten aus localStorage
-  const projects = JSON.parse(localStorage.getItem("timetracko.projects") || "[]");
-  const customers = JSON.parse(localStorage.getItem("timetracko.customers") || "[]");
+  const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
+  const customers = JSON.parse(localStorage.getItem("trackcycle.customers") || "[]");
 
   // 🗺 Mapping-Objekte für schnellen Zugriff
   const projById = Object.fromEntries(projects.map(p => [p.id, p]));
@@ -143,6 +143,24 @@ export default function EntryList({
       showToast("Es läuft bereits ein Timer!", "OK", null, 5000, "warning");
       return;
     }
+
+    // 🔍 Projekt aus localStorage holen
+    const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
+    const project = projects.find((p) => p.id === entry.projectId);
+
+    // ⛔ Projekt-Enddatum prüfen
+    if (project?.endDate && new Date(project.endDate) <= new Date()) {
+      showToast(
+        "Dieses Projekt ist beendet. Du kannst keine Zeit mehr darauf buchen.",
+        "OK",
+        null,
+        4000,
+        "warning"
+      );
+      return;
+    }
+
+    // ✅ Wenn alles passt, normalen Restart ausführen
     onRestart?.(entry);
   };
 

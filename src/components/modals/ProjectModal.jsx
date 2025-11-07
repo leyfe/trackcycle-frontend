@@ -59,12 +59,12 @@ export default function ProjectModal({ isOpen, onClose }) {
 
     addProject(id, name, customer.name);
 
-    const stored = JSON.parse(localStorage.getItem("timetracko.projects")) || [];
+    const stored = JSON.parse(localStorage.getItem("trackcycle.projects")) || [];
     const updated = [
       ...stored,
       { id, name, client: customer.name, description: desc, maxHours: max },
     ];
-    localStorage.setItem("timetracko.projects", JSON.stringify(updated));
+    localStorage.setItem("trackcycle.projects", JSON.stringify(updated));
 
     setProjectId("");
     setProjectName("");
@@ -107,14 +107,14 @@ export default function ProjectModal({ isOpen, onClose }) {
       }
 
       // 1️⃣ Zeiteinträge aktualisieren
-      let entries = JSON.parse(localStorage.getItem("timetracko.entries") || "[]");
+      let entries = JSON.parse(localStorage.getItem("trackcycle.entries") || "[]");
       entries = entries.map((e) =>
         e.projectId === oldId ? { ...e, projectId: newId } : e
       );
-      localStorage.setItem("timetracko.entries", JSON.stringify(entries));
+      localStorage.setItem("trackcycle.entries", JSON.stringify(entries));
 
       // 2️⃣ Favoriten in Settings anpassen
-      let settings = JSON.parse(localStorage.getItem("timetracko.settings") || "{}");
+      let settings = JSON.parse(localStorage.getItem("trackcycle.settings") || "{}");
 
       if (Array.isArray(settings.manualFavorites)) {
         settings.manualFavorites = settings.manualFavorites.map((key) => {
@@ -133,22 +133,22 @@ export default function ProjectModal({ isOpen, onClose }) {
         settings.customLabels = newLabels;
       }
 
-      localStorage.setItem("timetracko.settings", JSON.stringify(settings));
+      localStorage.setItem("trackcycle.settings", JSON.stringify(settings));
 
       // 3️⃣ Projekte aktualisieren
-      const storedProjects = JSON.parse(localStorage.getItem("timetracko.projects")) || [];
+      const storedProjects = JSON.parse(localStorage.getItem("trackcycle.projects")) || [];
       const updatedProjects = storedProjects.map((p) =>
         p.id === oldId ? { ...editData } : p
       );
-      localStorage.setItem("timetracko.projects", JSON.stringify(updatedProjects));
+      localStorage.setItem("trackcycle.projects", JSON.stringify(updatedProjects));
       setProjects(updatedProjects);
 
       showToast("Projekt-ID geändert und Daten migriert ✅", "OK", null, 4000, "success");
     } else {
       // Nur Name oder Beschreibung geändert
-      const stored = JSON.parse(localStorage.getItem("timetracko.projects")) || [];
+      const stored = JSON.parse(localStorage.getItem("trackcycle.projects")) || [];
       const updated = stored.map((p) => (p.id === editData.id ? editData : p));
-      localStorage.setItem("timetracko.projects", JSON.stringify(updated));
+      localStorage.setItem("trackcycle.projects", JSON.stringify(updated));
       showToast("Projekt gespeichert ✅", "OK", null, 2000, "success");
     }
 

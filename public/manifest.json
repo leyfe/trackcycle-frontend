@@ -1,6 +1,6 @@
 {
-  "short_name": "Trakko",
-  "name": "Trakko Time Tracker",
+  "short_name": "TrackCycle",
+  "name": "TrackCycle by Cyclehub",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }

@@ -16,6 +16,7 @@ import {
 import { ProjectContext } from "../context/ProjectContext";
 import { CustomerContext } from "../context/CustomerContext";
 import { Play, X } from "lucide-react";
+import { useToast } from "./Toast";
 
 export default function TimeEntryForm({
   onAdd,
@@ -49,6 +50,8 @@ export default function TimeEntryForm({
   const barRef = useRef(null);
   const skipNextAutoSave = useRef(false);
   const lastSelectedDescription = useRef(null);
+
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!selectedFavorite) return;
@@ -146,6 +149,13 @@ export default function TimeEntryForm({
   /* ───────────── Timer Start/Stop ───────────── */
   const startTimer = () => {
     if (!selectedProject || !description.trim()) return;
+
+      // ⛔ Prüfen, ob Projekt beendet ist
+    if (selectedProject.endDate && new Date(selectedProject.endDate) < new Date()) {
+      showToast("Projekt ist beendet", "OK", null, 3000, "warning");
+      return;
+    }
+    
     const startIso = showTimeInput ? customStartTime : new Date().toISOString();
     const newEntry = {
       id: Date.now(),
@@ -242,7 +252,6 @@ export default function TimeEntryForm({
             placeholder="Was habe ich gemacht?"
             allowsCustomValue
             inputValue={description}
-            selectedKey={description}
             aria-label="Beschreibung hinzufügen"
             onInputChange={(val) => {
               setDescription(val);
@@ -252,29 +261,20 @@ export default function TimeEntryForm({
             onSelectionChange={(key) => {
               if (!key) return;
 
-              if (lastSelectedDescription.current === key) return;
-              lastSelectedDescription.current = key;
+              // 🔹 Entschlüsseln
+              const [projectId, description] = key.split("::");
 
-              if (skipNextAutoSave.current) {
-                skipNextAutoSave.current = false;
-                return;
-              }
+              const project = visibleProjects.find((p) => p.id === projectId);
+              if (!project) return;
 
-              const item = suggestions.find((s) => s.description === key);
-              if (!item) return;
-
-              const project = visibleProjects.find((p) => p.id === item.projectId);
-              const projectId = project?.id || item.projectId;
-
-              setDescription(item.description);
-              setSelectedProject(project || null);
+              setDescription(description);
+              setSelectedProject(project);
               setSelectedProjectId(projectId);
 
-              // Default-Tätigkeit ermitteln
-              const defaultAct = project?.activities?.find((a) => a.isDefault);
+              const defaultAct = project.activities?.find((a) => a.isDefault);
               setSelectedActivityId(defaultAct?.id || "");
 
-              // Wenn bereits ein Timer läuft → abschließen
+              // Falls ein Timer läuft → abschließen
               if (activeEntry) {
                 const end = new Date().toISOString();
                 const duration =
@@ -282,13 +282,13 @@ export default function TimeEntryForm({
                 onAdd({ ...activeEntry, end, duration: duration.toFixed(2) });
               }
 
-              // Neuen Timer starten (nur EINMAL)
+              // ⏱ Neuen Timer starten
               const startIso = new Date().toISOString();
               const newEntry = {
                 id: Date.now(),
                 projectId,
-                projectName: project?.name || "Unbekannt",
-                description: item.description,
+                projectName: project.name,
+                description,
                 start: startIso,
                 end: null,
                 activityId: defaultAct?.id || selectedActivityId || "",
@@ -314,22 +314,28 @@ export default function TimeEntryForm({
               }
             }}
           >
-            {suggestions?.map((s, i) => {
-              const project = projects.find((p) => p.id === s.projectId);
-              return (
-                <AutocompleteItem
-                  key={s.description} // eindeutiger, damit Keyboard funktioniert
-                  textValue={s.description}
-                >
-                  <div className="flex flex-col">
-                    <span>{s.description}</span>
-                    <span className="text-xs text-slate-400">
-                      {project?.name || "Projekt unbekannt"}
-                    </span>
-                  </div>
-                </AutocompleteItem>
-              );
-            })}
+            {suggestions
+              ?.filter((s) => {
+                if (!s.lastUsed) return true;
+                const lastUsedDate = new Date(s.lastUsed);
+                const daysSince = (Date.now() - lastUsedDate) / (1000 * 60 * 60 * 24);
+                return daysSince <= 31;
+              })
+              .map((s) => {
+                const project = projects.find((p) => p.id === s.projectId);
+                const value = `${s.projectId || "none"}::${s.description}`; // eindeutiger Wert
+
+                return (
+                  <AutocompleteItem key={value} textValue={s.description} value={value}>
+                    <div className="flex flex-col">
+                      <span>{s.description}</span>
+                      <span className="text-xs text-slate-400">
+                        {project?.name || "Projekt unbekannt"}
+                      </span>
+                    </div>
+                  </AutocompleteItem>
+                );
+              })}
           </Autocomplete>
 
           {/* Projekt */}
