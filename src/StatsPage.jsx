@@ -40,7 +40,47 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   const workdays = settings.workdays ?? ["mon", "tue", "wed", "thu", "fri"];
 
   const [timeframe, setTimeframe] = useState("7d");
-  const [monthlyGoal, setMonthlyGoal] = useState(120);
+  const targetMonth = settings.targetMonth || new Date().toLocaleString("de-DE", { month: "long" });
+  const weeklyHours = settings.weeklyHours || 40;
+
+  const year = new Date().getFullYear();
+  const monthIndex = [
+    "Januar","Februar","März","April","Mai","Juni",
+    "Juli","August","September","Oktober","November","Dezember"
+  ].indexOf(targetMonth);
+
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const weeksInMonth = daysInMonth / 7;
+  const monthlyGoal = Math.round(weeklyHours * weeksInMonth);
+
+  // 🔹 Wochenziel (nutzt bestehende Variablen)
+  const weeklyGoal = weeklyHours; // aus Settings
+
+  // Beginn der aktuellen Woche bestimmen (Montag)
+  const now = new Date();
+  const day = now.getDay();
+  const mondayOffset = day === 0 ? 6 : day - 1;
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - mondayOffset);
+  weekStart.setHours(0, 0, 0, 0);
+
+  // Tatsächlich gearbeitete Stunden dieser Woche berechnen (inkl. Rundung falls aktiv)
+  const currentWeekHours = entries
+    .filter((e) => {
+      const d = new Date(e.start);
+      return d >= weekStart && e.projectId !== "PAUSE";
+    })
+    .reduce((sum, e) => {
+      let dur = parseFloat(e.duration) || 0;
+      if (roundEnabled) {
+        dur = Math.ceil(dur * 4) / 4; // Auf 15-Minuten-Blöcke aufrunden
+      }
+      return sum + dur;
+    }, 0);
+
+  // Prozentfortschritt und Reststunden
+  const weeklyPercent = Math.min((currentWeekHours / weeklyGoal) * 100, 100);
+  const weeklyRemaining = Math.max(weeklyGoal - currentWeekHours, 0);
 
   const pauseEntries = entries.filter(e => e.projectId === "PAUSE");
   const totalPauseHours = pauseEntries.reduce((s, e) => s + (parseFloat(e.duration) || 0), 0);
@@ -115,8 +155,17 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
 
   // 🔹 Monatsziel
   const currentMonthHours = entries
-    .filter(e => new Date(e.start).getMonth() === new Date().getMonth())
-    .reduce((sum, e) => sum + (parseFloat(e.duration) || 0), 0);
+    .filter((e) => {
+      const d = new Date(e.start);
+      return d.getMonth() === new Date().getMonth() && e.projectId !== "PAUSE";
+    })
+    .reduce((sum, e) => {
+      let dur = parseFloat(e.duration) || 0;
+      if (roundEnabled) {
+        dur = Math.ceil(dur * 4) / 4; // auf 15-Minuten-Blöcke runden
+      }
+      return sum + dur;
+    }, 0);
 
   const goalPercent = Math.min((currentMonthHours / monthlyGoal) * 100, 100);
   const remaining = Math.max(monthlyGoal - currentMonthHours, 0);
@@ -250,8 +299,22 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
               : `📉 ${diffPercent.toFixed(1)} % weniger als letzte Woche`}
           </div>
 
+          {/* Wochenziel */}
           <div className="text-slate-400 text-sm mb-2">
-            Monatsziel: {monthlyGoal} h
+            Wochenziel: {weeklyGoal} h
+          </div>
+          <div className="w-full bg-slate-800 rounded-lg h-3 mb-1">
+            <div
+              className={`h-3 rounded-lg bg-${settings.accentColor}-500 transition-all`}
+              style={{ width: `${weeklyPercent}%` }}
+            />
+          </div>
+          <div className="text-xs text-slate-500 mb-4">
+            {weeklyPercent.toFixed(0)} % erreicht • {weeklyRemaining.toFixed(1)} h verbleibend
+          </div>
+
+          <div className="text-slate-400 text-sm mb-2">
+            Monatsziel ({targetMonth}): {monthlyGoal} h / Woche {weeklyHours} h
           </div>
           <div className="w-full bg-slate-800 rounded-lg h-3 mb-1">
             <div

@@ -50,6 +50,8 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
         manualFavorites: [],
         customLabels: {},
         accentColor: "indigo",
+        weeklyHours: 40,
+        targetMonth: new Date().toLocaleString("de-DE", { month: "long" }),
     });
 
     const [showConaktivExport, setShowConaktivExport] = useState(false);
@@ -213,6 +215,73 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
                         })}
                     </div>
                 </CardBody>
+            </Card>
+
+            {/* 🕒 Wochenarbeitszeit & Monatsziel */}
+            <Card className="bg-slate-900/60 border border-slate-700 p-3">
+            <CardBody>
+                <h2 className="text-lg font-semibold text-slate-100 mb-4">
+                Arbeitszeit & Monatsziel
+                </h2>
+
+                <div className="space-y-5">
+                {/* Wochenstunden */}
+                <div className="flex justify-between items-center">
+                    <span className="text-slate-300 text-sm">Wochenarbeitszeit (Stunden)</span>
+                    <Input
+                    type="number"
+                    size="sm"
+                    min={0}
+                    max={80}
+                    value={settings.weeklyHours ?? ""}
+                    onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setSettings((prev) => ({ ...prev, weeklyHours: val }));
+                        showToast("Einstellung gespeichert", "OK", null, 3000, "success");
+                    }}
+                    className="w-24 text-right"
+                    />
+                </div>
+
+                {/* Monatsauswahl */}
+                <div className="flex justify-between items-center">
+                    <span className="text-slate-300 text-sm">Aktueller Zielmonat</span>
+                    <select
+                    value={settings.targetMonth}
+                    onChange={(e) => {
+                        setSettings((prev) => ({ ...prev, targetMonth: e.target.value }));
+                        showToast("Monat geändert", "OK", null, 3000, "success");
+                    }}
+                    className="bg-slate-800 text-slate-200 rounded-md px-2 py-1 text-sm"
+                    >
+                    {[
+                        "Januar","Februar","März","April","Mai","Juni",
+                        "Juli","August","September","Oktober","November","Dezember",
+                    ].map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                    ))}
+                    </select>
+                </div>
+
+                {/* Automatische Vorschau */}
+                <div className="text-xs text-slate-400 mt-3">
+                    Geschätztes Monatsziel:{" "}
+                    <span className={`text-${settings.accentColor}-400 font-medium`}>
+                    {(() => {
+                        const year = new Date().getFullYear();
+                        const monthIndex = [
+                        "Januar","Februar","März","April","Mai","Juni",
+                        "Juli","August","September","Oktober","November","Dezember",
+                        ].indexOf(settings.targetMonth);
+                        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+                        const weeks = daysInMonth / 7;
+                        const monthlyHours = Math.round((settings.weeklyHours || 0) * weeks);
+                        return `${monthlyHours} Stunden`;
+                    })()}
+                    </span>
+                </div>
+                </div>
+            </CardBody>
             </Card>
 
             <AccentColorPicker

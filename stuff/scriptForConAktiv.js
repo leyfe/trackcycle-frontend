@@ -1,11 +1,11 @@
 const entries = [
   {
-    "date": "4.11.2025",
-    "hours": "1,00",
-    "customer": "Commerzbank AG",
-    "project": "Com.4645",
-    "activity": "Tech. Projektmanager FeLe",
-    "description": "Mail Matthias Wenzelberger"
+    "date": "6.11.2025",
+    "hours": "0,00",
+    "customer": "x",
+    "project": "x",
+    "activity": "x",
+    "description": "x"
   },
 ];
 
