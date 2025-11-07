@@ -19,7 +19,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { Flame, Diamond, Brain, Clock } from "lucide-react";
+import { Flame, Diamond, Brain, Clock, Circle } from "lucide-react";
 import PageHeader from "./components/PageHeader";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#14b8a6", "#f59e0b", "#f43f5e"];
@@ -64,23 +64,29 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   weekStart.setDate(now.getDate() - mondayOffset);
   weekStart.setHours(0, 0, 0, 0);
 
-  // Tatsächlich gearbeitete Stunden dieser Woche berechnen (inkl. Rundung falls aktiv)
-  const currentWeekHours = entries
+  // 🔹 Ungerundete Stunden (Basis)
+  const currentWeekHoursRaw = entries
+    .filter((e) => {
+      const d = new Date(e.start);
+      return d >= weekStart && e.projectId !== "PAUSE";
+    })
+    .reduce((sum, e) => sum + (parseFloat(e.duration) || 0), 0);
+
+  // 🔹 Gerundete Stunden (nur falls aktiviert)
+  const currentWeekHoursRounded = entries
     .filter((e) => {
       const d = new Date(e.start);
       return d >= weekStart && e.projectId !== "PAUSE";
     })
     .reduce((sum, e) => {
       let dur = parseFloat(e.duration) || 0;
-      if (roundEnabled) {
-        dur = Math.ceil(dur * 4) / 4; // Auf 15-Minuten-Blöcke aufrunden
-      }
+      dur = Math.ceil(dur * 4) / 4; // 15-Minuten-Rundung
       return sum + dur;
     }, 0);
 
-  // Prozentfortschritt und Reststunden
-  const weeklyPercent = Math.min((currentWeekHours / weeklyGoal) * 100, 100);
-  const weeklyRemaining = Math.max(weeklyGoal - currentWeekHours, 0);
+  // Prozentwerte
+  const weeklyPercentRaw = Math.min((currentWeekHoursRaw / weeklyGoal) * 100, 100);
+  const weeklyPercentRounded = Math.min((currentWeekHoursRounded / weeklyGoal) * 100, 100);
 
   const pauseEntries = entries.filter(e => e.projectId === "PAUSE");
   const totalPauseHours = pauseEntries.reduce((s, e) => s + (parseFloat(e.duration) || 0), 0);
@@ -131,7 +137,7 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   const avgHours = totalDays ? (totalHours / totalDays).toFixed(2) : "0.00";
   const perfectDays = Object.values(dailyTotals).filter((m) => m / 60 >= 8).length;
 
-    // 🔹 Wochenvergleich
+  // 🔹 Wochenvergleich
   const calcTotalHours = (fromDays, toDays) => {
     const now = new Date();
     const from = new Date();
@@ -166,6 +172,29 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
       }
       return sum + dur;
     }, 0);
+
+    // 🔹 Ungerundete & gerundete Monatsstunden für Vergleich
+  const currentMonthHoursRaw = entries
+    .filter((e) => {
+      const d = new Date(e.start);
+      return d.getMonth() === new Date().getMonth() && e.projectId !== "PAUSE";
+    })
+    .reduce((sum, e) => sum + (parseFloat(e.duration) || 0), 0);
+
+  const currentMonthHoursRounded = entries
+    .filter((e) => {
+      const d = new Date(e.start);
+      return d.getMonth() === new Date().getMonth() && e.projectId !== "PAUSE";
+    })
+    .reduce((sum, e) => {
+      let dur = parseFloat(e.duration) || 0;
+      dur = Math.ceil(dur * 4) / 4; // Rundung auf 15-Minuten-Blöcke
+      return sum + dur;
+    }, 0);
+
+  // Prozentwerte (ungerundet / gerundet)
+  const goalPercentRaw = Math.min((currentMonthHoursRaw / monthlyGoal) * 100, 100);
+  const goalPercentRounded = Math.min((currentMonthHoursRounded / monthlyGoal) * 100, 100);
 
   const goalPercent = Math.min((currentMonthHours / monthlyGoal) * 100, 100);
   const remaining = Math.max(monthlyGoal - currentMonthHours, 0);
@@ -222,8 +251,7 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   }, [workEntries, roundEnabled, projects]);
 
   /* ────────────── SUMMARY ────────────── */
-  const summaryText = `
-Du hast in diesem Zeitraum ${totalDays} Arbeitstage erfasst, durchschnittlich ${avgHours} h pro Tag.
+  const summaryText = `Du hast in diesem Zeitraum ${totalDays} Arbeitstage erfasst, durchschnittlich ${avgHours} h pro Tag.
 Dein längster Streak beträgt ${streak} Tage 🔥.
 ${perfectDays > 0 ? `Du hattest ${perfectDays} perfekte Tage 💎 – stark!` : ""}
 Dein Fokus-Score liegt bei ${focusScore}% 🧠.
@@ -262,12 +290,6 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
         </Dropdown>
       </PageHeader>
 
-      {roundEnabled && (
-        <p className="text-xs text-slate-400 italic -mt-4 mb-2">
-          ⏱ Werte inkl. Rundung auf 15-Minuten-Blöcke
-        </p>
-      )}
-
       {/* Kennzahlen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard icon={<Flame />} label="Streak" value={`${streak} Tage`} accentColor={settings.accentColor} />
@@ -290,9 +312,11 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
       </div>
 
       {/* Wochenvergleich + Monatsziel */}
-      <Card className="bg-slate-900/70 border border-slate-700">
+      <Card className="bg-slate-900/60 border border-slate-700 p-3">
         <CardBody>
-          <h2 className="text-slate-100 font-semibold mb-3">Trends & Fortschritt</h2>
+          <h2 className="text-lg font-semibold text-slate-100 mb-4">
+          Trends & Fortschritt
+          </h2>
           <div className="text-slate-300 text-sm mb-3">
             {diffPercent >= 0
               ? `📈 +${diffPercent.toFixed(1)} % im Vergleich zur Vorwoche`
@@ -303,35 +327,51 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           <div className="text-slate-400 text-sm mb-2">
             Wochenziel: {weeklyGoal} h
           </div>
-          <div className="w-full bg-slate-800 rounded-lg h-3 mb-1">
+
+          {/* Basisbalken (ungerundet) */}
+          <div className="w-full bg-slate-800 rounded-lg h-3 mb-1 relative overflow-hidden">
             <div
-              className={`h-3 rounded-lg bg-${settings.accentColor}-500 transition-all`}
-              style={{ width: `${weeklyPercent}%` }}
+              className={`absolute top-0 left-0 h-3 rounded-lg bg-${settings.accentColor}-500/50 transition-all`}
+              style={{ width: `${weeklyPercentRounded}%` }}
             />
-          </div>
-          <div className="text-xs text-slate-500 mb-4">
-            {weeklyPercent.toFixed(0)} % erreicht • {weeklyRemaining.toFixed(1)} h verbleibend
+            <div
+              className={`absolute top-0 left-0 h-3 rounded-lg bg-${settings.accentColor}-500`}
+              style={{ width: `${weeklyPercentRaw}%` }}
+            />
           </div>
 
-          <div className="text-slate-400 text-sm mb-2">
-            Monatsziel ({targetMonth}): {monthlyGoal} h / Woche {weeklyHours} h
+          <div className="text-xs text-slate-500 mb-4 flex justify-between">
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500 rounded-full`}></span>Ungerundet: {weeklyPercentRaw.toFixed(0)} % ({currentWeekHoursRaw.toFixed(1)} h)</span>
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500/50 rounded-full`}></span>Gerundet: {weeklyPercentRounded.toFixed(0)} % ({currentWeekHoursRounded.toFixed(1)} h)</span>
           </div>
-          <div className="w-full bg-slate-800 rounded-lg h-3 mb-1">
+
+          {/* Monatsziel */}
+          <div className="text-slate-400 text-sm mb-2">Monatsziel: {monthlyGoal} h</div>
+
+          <div className="w-full bg-slate-800 rounded-lg h-3 mb-1 relative overflow-hidden">
             <div
-              className={`h-3 rounded-lg bg-${settings.accentColor}-500 transition-all`}
-              style={{ width: `${goalPercent}%` }}
+              className={`absolute top-0 left-0 h-3 rounded-lg bg-${settings.accentColor}-500/50 transition-all`}
+              style={{ width: `${goalPercentRounded}%` }}
+            />
+            <div
+              className={`absolute top-0 left-0 h-3 rounded-lg bg-${settings.accentColor}-500`}
+              style={{ width: `${goalPercentRaw}%` }}
             />
           </div>
-          <div className="text-xs text-slate-500">
-            {goalPercent.toFixed(0)} % erreicht • {remaining.toFixed(1)} h verbleibend
+
+          <div className="text-xs text-slate-500 mb-4 flex justify-between">
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500 rounded-full`}></span>Ungerundet: {goalPercentRaw.toFixed(0)} % ({currentMonthHoursRaw.toFixed(1)} h)</span>
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500/50 rounded-full`}></span>Gerundet: {goalPercentRounded.toFixed(0)} % ({currentMonthHoursRounded.toFixed(1)} h)</span>
           </div>
         </CardBody>
       </Card>
 
       {/* Wochenbalken */}
-      <Card className="bg-slate-900/70 border border-slate-700">
+      <Card className="bg-slate-900/60 border border-slate-700 p-3">
         <CardBody>
-          <h2 className="text-slate-100 font-semibold mb-3">Arbeitszeit (letzte 7 Tage)</h2>
+          <h2 className="text-lg font-semibold text-slate-100 mb-4">
+          Arbeitszeit (letzte 7 Tage)
+          </h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={weeklyData}>
               <XAxis dataKey="day" tick={{ fill: "#94a3b8" }} />
@@ -370,9 +410,11 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
       </Card>
 
       {/* Projektverteilung */}
-      <Card className="bg-slate-900/70 border border-slate-700">
+      <Card className="bg-slate-900/60 border border-slate-700 p-3">
         <CardBody>
-          <h2 className="text-slate-100 font-semibold mb-3">Projektverteilung</h2>
+          <h2 className="text-lg font-semibold text-slate-100 mb-4">
+          Projektverteilung
+          </h2>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
@@ -401,11 +443,11 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
         </CardBody>
       </Card>
 
-      {/* ⚠️ Auffälligkeiten */}
-      <Card className="bg-slate-900/70 border border-slate-700">
+      {/* Auffälligkeiten */}
+      <Card className="bg-slate-900/60 border border-slate-700 p-3">
         <CardBody>
-          <h2 className="text-slate-100 font-semibold mb-2 flex items-center gap-2">
-            ⚠️ Auffälligkeiten
+          <h2 className="text-lg font-semibold text-slate-100 mb-4">
+          Auffälligkeiten
           </h2>
           {(() => {
             const shortDays = weeklyData
@@ -444,11 +486,11 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
         </CardBody>
       </Card>
 
-      {/* 🧠 Zusammenfassung */}
-      <Card className="bg-slate-900/70 border border-slate-700">
+      {/* Zusammenfassung */}
+      <Card className="bg-slate-900/60 border border-slate-700 p-3">
         <CardBody>
-          <h2 className="text-slate-100 font-semibold mb-2 flex items-center gap-2">
-            🧠 Zusammenfassung
+          <h2 className="text-lg font-semibold text-slate-100 mb-4">
+          Zusammenfassung
           </h2>
           <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">
             {summaryText}
@@ -456,9 +498,12 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
         </CardBody>
       </Card>
 
-      <Card className="bg-slate-900/70 border border-slate-700">
+      {/* Pausen */}
+      <Card className="bg-slate-900/60 border border-slate-700 p-3">
         <CardBody>
-          <h2 className="text-slate-100 font-semibold mb-2">☕ Pausen</h2>
+          <h2 className="text-lg font-semibold text-slate-100 mb-4">
+          Pausen
+          </h2>
           {pauseEntries.length === 0 ? (
             <p className="text-slate-400 text-sm">Keine Pausen erfasst.</p>
           ) : (
@@ -469,6 +514,12 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           )}
         </CardBody>
       </Card>
+
+      {roundEnabled && (
+        <p className="text-xs text-slate-400 italic -mt-4 mb-2">
+          Werte inkl. Rundung auf 15-Minuten-Blöcke
+        </p>
+      )}
     </div>
   );
 }
