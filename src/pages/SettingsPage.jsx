@@ -5,6 +5,8 @@ import {
     CardBody,
     Button,
     Input,
+    Select,
+    SelectItem
 } from "@nextui-org/react";
 import { FolderCog, Users } from "lucide-react";
 import ConaktivExportModal from "../components/modals/ConaktivExportModal";
@@ -239,28 +241,33 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
                         setSettings((prev) => ({ ...prev, weeklyHours: val }));
                         showToast("Einstellung gespeichert", "OK", null, 3000, "success");
                     }}
-                    className="w-24 text-right"
+                    className="max-w-xs ml-5 text-right"
                     />
                 </div>
 
                 {/* Monatsauswahl */}
                 <div className="flex justify-between items-center">
                     <span className="text-slate-300 text-sm">Aktueller Zielmonat</span>
-                    <select
-                    value={settings.targetMonth}
-                    onChange={(e) => {
-                        setSettings((prev) => ({ ...prev, targetMonth: e.target.value }));
-                        showToast("Monat geändert", "OK", null, 3000, "success");
-                    }}
-                    className="bg-slate-800 text-slate-200 rounded-md px-2 py-1 text-sm"
-                    >
-                    {[
-                        "Januar","Februar","März","April","Mai","Juni",
-                        "Juli","August","September","Oktober","November","Dezember",
-                    ].map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                    ))}
-                    </select>
+                    <Select
+                        size="sm"
+                        className="max-w-xs ml-5"
+                        labelPlacement="outside"
+                        selectedKeys={[settings.targetMonth]}
+                        onChange={(e) => {
+                            const newMonth = e.target.value;
+                            setSettings((prev) => ({ ...prev, targetMonth: newMonth }));
+                            showToast("Monat geändert", "OK", null, 3000, "success");
+                        }}
+                        >
+                        {[
+                            "Januar","Februar","März","April","Mai","Juni",
+                            "Juli","August","September","Oktober","November","Dezember",
+                        ].map((m) => (
+                            <SelectItem key={m} value={m}>
+                            {m}
+                            </SelectItem>
+                        ))}
+                    </Select>
                 </div>
 
                 {/* Automatische Vorschau */}
