@@ -9,23 +9,25 @@ import App from "./App.jsx";
 import "./index.css";
 
 
-if ("serviceWorker" in navigator) {
+if (import.meta.env.MODE === "production" && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/sw.js", { type: "module" }) // <-- wichtig!
+      .register("/apps/track/sw.js", {
+        scope: "/apps/track/",
+        type: "module", // wenn dein SW ein ES-Modul ist
+      })
       .then(() => console.log("✅ Service Worker registriert"))
-      .catch((err) => console.error("❌ SW-Fehler", err));
+      .catch((err) => console.error("❌ SW-Fehler:", err));
   });
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-
     <NextUIProvider>
       <ToastProvider>
         <CustomerProvider>
           <ProjectProvider>
-            <BrowserRouter>
+              <BrowserRouter basename={import.meta.env.MODE === "production" ? "/track" : "/"}>
               <App />
             </BrowserRouter>
           </ProjectProvider>

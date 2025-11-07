@@ -1,4 +1,4 @@
-const CACHE_VERSION = import.meta.env.VITE_APP_VERSION;
+const CACHE_VERSION = "__APP_VERSION__";
 const CACHE_NAME = `trackcycle-cache-${CACHE_VERSION}`;
 
 self.addEventListener("install", (event) => {
