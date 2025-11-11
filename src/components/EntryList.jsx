@@ -166,7 +166,7 @@ export default function EntryList({
 
   return (
     <div className="space-y-8">
-      {visibleDates.map((date) => {
+      {visibleDates.map((date, index) => {
         const entriesForDay = groupedByDate[date];
         const dayLabel = isToday(date) ? "Heute" : date;
 
@@ -410,8 +410,9 @@ export default function EntryList({
                   </div>
                 );
               })}
-
-            <hr className="my-12 h-0.5 border-none bg-slate-600/50" />
+            {index < visibleDates.length - 1 && (
+              <hr className="my-12 h-0.5 border-none bg-slate-600/50" />
+            )}
           </div>
         );
       })}
@@ -419,10 +420,10 @@ export default function EntryList({
       {hasMore && (
         <div className="flex justify-center">
           <Button
-            variant="flat"
-            color="secondary"
+            variant="default"
+            color="default"
             onPress={() => setVisibleDays((v) => v + 7)}
-            className="text-slate-300 mt-2 hover:bg-slate-700/60"
+            className="text-slate-500 bg-slate-700/50 hover:bg-slate-700/60"
           >
             Mehr Tage anzeigen
           </Button>
