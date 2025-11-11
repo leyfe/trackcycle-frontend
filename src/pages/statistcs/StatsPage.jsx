@@ -318,9 +318,12 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           Trends & Fortschritt
           </h2>
           <div className="text-slate-300 text-sm mb-3">
+          <div className="text-slate-400 text-sm mb-2">
+            7-Tages Vergleich
+          </div>
             {diffPercent >= 0
-              ? `📈 +${diffPercent.toFixed(1)} % im Vergleich zur Vorwoche`
-              : `📉 ${diffPercent.toFixed(1)} % weniger als letzte Woche`}
+              ? `📈 +${diffPercent.toFixed(1)} % mehr`
+              : `📉 ${diffPercent.toFixed(1)} % weniger`}
           </div>
 
           {/* Wochenziel */}

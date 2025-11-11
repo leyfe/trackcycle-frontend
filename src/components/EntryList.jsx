@@ -291,11 +291,11 @@ export default function EntryList({
                 const description = list[0].description;
                 const project = projById[list[0].projectId];
                 const projectName = project?.name || "Unbekannt";
-                const collapsed = collapsedTasks[key] ?? true;
+                const collapsed = collapsedTasks[key] ?? false;
                 const toggle = () =>
                   setCollapsedTasks((prev) => ({
                     ...prev,
-                    [key]: !prev[key],
+                    [key]: !(prev[key] ?? false),
                   }));
 
                 const isPauseGroup = isPauseEntry(list[0]);
@@ -305,8 +305,8 @@ export default function EntryList({
                     key={key}
                     className={`group rounded-xl p-4 mb-3 border transition-all duration-300 relative ${
                       isPauseGroup
-                        ? "bg-slate-600/30 border-slate-600/40 text-amber-200"
-                        : "bg-slate-900/70 border-slate-800 text-slate-100"
+                        ? "bg-slate-600/30 hover:bg-slate-600/40 border-slate-600/40 text-amber-200"
+                        : "bg-slate-900/70 hover:bg-slate-900/50 hover:-mx-0.5 transform- border-slate-800 text-slate-100"
                     }`}
                   >
                     <div
@@ -355,8 +355,8 @@ export default function EntryList({
                             <Button
                               isIconOnly
                               size="sm"
-                              variant="light"
-                              className="absolute opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                              variant="flat"
+                              className="bg-slate-900/0 absolute opacity-0 group-hover:opacity-100 transition-all duration-200 -rotate-180 group-hover:rotate-0 hover:scale-110"
                               onPress={() =>
                                 handleRestart(list[list.length - 1])
                               }
@@ -372,13 +372,12 @@ export default function EntryList({
                         </div>
                       )}
                     </div>
-
-                    {!collapsed && (
+                    {collapsed && (
                       <div className="space-y-2 mt-3">
                         {list.map((e) => (
                           <div
                             key={e.id}
-                            className="flex justify-between items-center bg-slate-800/40 rounded-lg px-3 py-2"
+                            className="flex justify-between items-center bg-slate-800/40 rounded-lg px-3 py-1"
                           >
                             <span className="text-xs text-slate-300">
                               {formatTime(e.start)} – {formatTime(e.end)} (
@@ -388,18 +387,20 @@ export default function EntryList({
                               <Button
                                 isIconOnly
                                 size="sm"
-                                variant="light"
+                                variant="flat"
+                                className="text-slate-500 hover:text-slate-200 bg-slate-900/0 hover:bg-slate-900"
                                 onPress={() => onEdit(e)}
                               >
-                                <Edit className="w-4 h-4 text-slate-400" />
+                                <Edit className="w-4 h-4" />
                               </Button>
                               <Button
                                 isIconOnly
                                 size="sm"
-                                variant="light"
+                                variant="flat"
+                                className="text-slate-500 hover:text-slate-200 bg-slate-900/0 hover:bg-slate-900"
                                 onPress={() => onDelete(e.id)}
                               >
-                                <Trash2 className="w-4 h-4 text-slate-400" />
+                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
                           </div>
