@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button, Input, Card, CardBody } from "@nextui-org/react";
 import { Plus, Save, Trash2, ChevronDown, ChevronRight } from "lucide-react";
-import PageHeader from "../components/PageHeader";
-import { safeUUID } from "../utils/uuid";
+import PageHeader from "../../components/PageHeader";
+import { safeUUID } from "../../utils/uuid";
 
 export default function SettingsCustomers({ onBack, settings }) {
   const [customers, setCustomers] = useState([]);
@@ -63,7 +63,7 @@ export default function SettingsCustomers({ onBack, settings }) {
   };
 
   return (
-    <div className="space-y-6 mt-6 pb-20">
+    <div className="space-y-6 mt-6">
       <PageHeader title="Kunden verwalten" onBack={onBack} />
 
       {customers.map((c) => {

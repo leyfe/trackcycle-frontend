@@ -9,14 +9,14 @@ import {
     SelectItem
 } from "@nextui-org/react";
 import { FolderCog, Users } from "lucide-react";
-import ConaktivExportModal from "../components/modals/ConaktivExportModal";
-import { exportAllData, exportEntriesCSV, exportEntriesConaktiv } from "../utils/exportData";
-import { importAllData } from "../utils/importData";
-import PageHeader from "../components/PageHeader";
-import { useToast } from "../components/Toast";
-import useICalCalendar from "../hooks/useICalCalendar";
-import CalendarSuggestions from "../components/CalendarSuggestions";
-import AccentColorPicker from "../components/AccentColorPicker";
+import ConaktivExportModal from "../../components/modals/ConaktivExportModal";
+import { exportAllData, exportEntriesCSV, exportEntriesConaktiv } from "../../utils/exportData";
+import { importAllData } from "../../utils/importData";
+import PageHeader from "../../components/PageHeader";
+import { useToast } from "../../components/Toast";
+import useICalCalendar from "../../hooks/useICalCalendar";
+import CalendarSuggestions from "../../components/CalendarSuggestions";
+import AccentColorPicker from "../../components/AccentColorPicker";
 
 // oben in SettingsPage.jsx (außerhalb der Komponente)
 const TRACK_SELECTED = {
@@ -126,7 +126,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
     };
 
     return (
-        <div className="space-y-6 mt-6 pb-20 relative">
+        <div className="space-y-6 mt-6 relative">
             <PageHeader onBack={onBack} title="Einstellungen" subtitle="" />
             <Card className="bg-slate-900/60 border border-slate-700 p-3">
                 <CardBody>
@@ -301,7 +301,7 @@ export default function SettingsPage({ entries, onSettingsChange, onBack, onNavi
                 }}
             />
 
-            <div className="space-y-6 mt-6 pb-24">                 
+            <div className="space-y-6 mt-6">                 
                 {/* 📁 Projekte & Kunden */}
                 <Card className="bg-slate-900/60 border border-slate-700 p-3">
                     <CardBody>

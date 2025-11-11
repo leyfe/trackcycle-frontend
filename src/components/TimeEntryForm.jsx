@@ -242,7 +242,7 @@ export default function TimeEntryForm({
         {/* Inhalt */}
         <div
           className={`flex max-w-3xl w-full p-4 ${
-            isSticky ? "items-center gap-2 inline-flex justify-between" : "flex-col space-y-4"
+            isSticky ? "items-center gap-2 justify-between" : "flex-col space-y-4"
           } transition-all duration-500`}
         >
           {/* Beschreibung */}

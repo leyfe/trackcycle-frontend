@@ -20,7 +20,7 @@ import {
   Cell,
 } from "recharts";
 import { Flame, Diamond, Brain, Clock, Circle } from "lucide-react";
-import PageHeader from "./components/PageHeader";
+import PageHeader from "../../components/PageHeader";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#14b8a6", "#f59e0b", "#f43f5e"];
 const roundToQuarter = (minutes) => Math.ceil(minutes / 15) * 15;
@@ -259,7 +259,7 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
 
   /* ────────────── RENDER ────────────── */
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 mt-6">
       {/* Header */}
       <PageHeader title="Statistiken" onBack={onBack}>
         <Dropdown>
@@ -516,7 +516,7 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
       </Card>
 
       {roundEnabled && (
-        <p className="text-xs text-slate-400 italic -mt-4 mb-2">
+        <p className="text-xs text-slate-400 italic">
           Werte inkl. Rundung auf 15-Minuten-Blöcke
         </p>
       )}

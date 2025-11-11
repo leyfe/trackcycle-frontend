@@ -15,9 +15,9 @@ import {
   ChevronDown,
   ChevronRight
 } from "lucide-react";
-import PageHeader from "../components/PageHeader";
-import { safeUUID } from "../utils/uuid";
-import ActivityModal from "../components/modals/ActivityModal";
+import PageHeader from "../../components/PageHeader";
+import { safeUUID } from "../../utils/uuid";
+import ActivityModal from "../../components/modals/ActivityModal";
 
 export default function SettingsProjects({ onBack, settings }) {
   const [projects, setProjects] = useState([]);
@@ -135,7 +135,7 @@ export default function SettingsProjects({ onBack, settings }) {
   }
 
   return (
-    <div className="space-y-6 mt-6 pb-20">
+    <div className="space-y-6 mt-6">
       <PageHeader title="Projekte verwalten" onBack={onBack} />
 
       {groupedProjects.map((group) => (

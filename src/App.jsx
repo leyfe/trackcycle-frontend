@@ -2,11 +2,11 @@ import React, { useState, useContext, useEffect, useCallback, useRef } from "rea
 import TimeEntryForm from "./components/TimeEntryForm";
 import EntryList from "./components/EntryList";
 import FavoritesBar from "./components/FavoritesBar";
-import StatsPage from "./StatsPage";
-import SettingsPage from "./pages/SettingsPage";
-import SettingsCustomers from "./pages/SettingsCustomers";
-import SettingsProjects from "./pages/SettingsProjects";
-import SettingsFavorites from "./pages/SettingsFavorites";
+import StatsPage from "./pages/statistcs/StatsPage";
+import SettingsPage from "./pages/settings/SettingsPage";
+import SettingsCustomers from "./pages/settings/SettingsCustomers";
+import SettingsProjects from "./pages/settings/SettingsProjects";
+import SettingsFavorites from "./pages/settings/SettingsFavorites";
 import BottomNav from "./components/BottomNav";
 import { ProjectContext } from "./context/ProjectContext";
 import { useToast } from "./components/Toast";

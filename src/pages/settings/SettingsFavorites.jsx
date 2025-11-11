@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardBody, Button, Input, useDisclosure } from "@nextui-org/react";
 import { Edit3, Trash2, Save, PlusCircle } from "lucide-react";
-import PageHeader from "../components/PageHeader";
-import { useToast } from "../components/Toast";
-import EditFavoriteModal from "../components/modals/EditFavoriteModal";
+import PageHeader from "../../components/PageHeader";
+import { useToast } from "../../components/Toast";
+import EditFavoriteModal from "../../components/modals/EditFavoriteModal";
 
 export default function SettingsFavorites({ entries = [], onBack, settings, onSettingsChange }) {
   const { showToast } = useToast();
@@ -166,7 +166,7 @@ export default function SettingsFavorites({ entries = [], onBack, settings, onSe
 
   /* ───────────── RENDER ───────────── */
   return (
-    <div className="space-y-6 mt-6 pb-24">
+    <div className="space-y-6 mt-6">
       <PageHeader title="Favoriten bearbeiten" onBack={onBack} />
 
       <Card className="bg-slate-900/70 border border-slate-700 shadow-lg">
