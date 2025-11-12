@@ -82,22 +82,22 @@ export function exportEntriesConaktiv({ mode = "day", startDate, endDate } = {})
   const projects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
   const customers = JSON.parse(localStorage.getItem("trackcycle.customers") || "[]");
   const settings = JSON.parse(localStorage.getItem("trackcycle.settings") || "{}");
-  const activities = projects.flatMap(p =>(p.activities || []).map(a => ({ ...a, projectId: p.id }))  );
+  const activities = projects.flatMap(p =>
+    (p.activities || []).map(a => ({ ...a, projectId: p.id }))
+  );
 
-  const projById = Object.fromEntries(projects.map((p) => [p.id, p]));
+  const projById = Object.fromEntries(projects.map(p => [p.id, p]));
   const custById = Object.fromEntries(customers.map(c => [c.id, c]));
   const activityById = Object.fromEntries(activities.map(a => [a.id, a]));
 
-
   // 🕒 15-Minuten-Rundung aktiv?
   const roundToQuarter = settings.roundToQuarter ?? false;
-
   const roundMinutes = (hours) => {
     const minutes = hours * 60;
     return roundToQuarter ? Math.ceil(minutes / 15) * 15 / 60 : hours;
   };
 
-  // 📅 Filter Zeitraum
+  // 📅 Zeitraum-Filter
   const filterFn = (e) => {
     const d = new Date(e.start);
     if (mode === "day") {
@@ -109,10 +109,11 @@ export function exportEntriesConaktiv({ mode = "day", startDate, endDate } = {})
       const end = new Date(endDate);
       return d >= start && d <= end;
     }
-    return true; // alles
+    return true;
   };
 
-  const filtered = entries.filter(filterFn);
+  // ❌ "Pause"-Einträge ausschließen
+  const filtered = entries.filter(e => e.projectId !== "PAUSE" && filterFn(e));
 
   // 🧩 Gruppierte Tasks (Projekt + Beschreibung)
   const grouped = {};
@@ -132,12 +133,15 @@ export function exportEntriesConaktiv({ mode = "day", startDate, endDate } = {})
     const customer = custById[project?.customerId];
     const activity = activityById[first.activityId];
 
+    // 🧹 Bereinigen: "Unbekannt" → leer
+    const safe = (val) => (val === "Unbekannt" || val === undefined ? "" : val);
+
     return {
       date: new Date(first.start).toLocaleDateString("de-DE"),
       hours: totalHours.toFixed(2).replace(".", ","),
-      customer: customer?.name || project?.client || "Unbekannt",
-      project: project?.id || first.projectName || "Unbekannt",
-      activity: activityById[first.activityId]?.label || "Unbekannt",
+      customer: safe(customer?.name || project?.client || "Unbekannt"),
+      project: safe(project?.id || first.projectName || "Unbekannt"),
+      activity: safe(activity?.label || "Unbekannt"),
       description: first.description || "",
     };
   });
