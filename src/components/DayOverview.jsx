@@ -132,7 +132,7 @@ export default function DayOverview({ gaps, totalHoursRaw, totalHoursRounded, da
                 <div
                   key={i}
                   onClick={() => setActiveGap(g)}
-                  className={`flex items-center justify-between border-b border-slate-700/50 last:border-0 pb-1 cursor-pointer hover:bg-slate-700/30 rounded px-2 ${
+                  className={`flex items-center w-[calc(100%_+_1rem)] px-[0.5rem] -ml-[0.5rem] justify-between border-b border-slate-700/50 last:border-0 pb-1 cursor-pointer hover:bg-slate-700/30 rounded ${
                     activeGap === g ? "bg-slate-700/50" : ""
                   }`}
                 >
@@ -262,10 +262,10 @@ export default function DayOverview({ gaps, totalHoursRaw, totalHoursRounded, da
 
         {/* Tagesziel */}
         <div className="mt-4">
-          <div className="font-medium mb-4">
-            Tagesziel: {DAILY_GOAL_H} h
+          <div className="flex space-between items-centerfont-medium mb-4">
+            <span className="flex-1">Tagesziel: {DAILY_GOAL_H} h</span>
+            <span className="text-xs text-slate-500 font-normal ">{remainingFormatted} h fehlen</span>
           </div>
-
           {/* Fortschrittsbalken */}
           <div className="w-full bg-slate-700/50 rounded-lg h-3 mb-2 relative overflow-hidden">
             {/* Ungerundet */}
@@ -292,13 +292,6 @@ export default function DayOverview({ gaps, totalHoursRaw, totalHoursRounded, da
             </span>
           </div>
 
-          {remainingMinutes > 0 && (
-            <div className="text-sm text-slate-400 mt-1">
-              <div className="text-sm text-slate-400 mt-1">
-                Es fehlen noch {remainingFormatted} h bis {DAILY_GOAL_H} h 
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
