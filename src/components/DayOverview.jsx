@@ -2,8 +2,9 @@ import React, { useState, useContext, useRef } from "react";
 import { Button, Autocomplete, AutocompleteItem, AutocompleteSection, Input, Select, SelectItem, Card, CardBody } from "@nextui-org/react";
 import { ProjectContext } from "../context/ProjectContext"; // falls du den Context nutzt
 import { CustomerContext } from "../context/CustomerContext";
+import { formatTotalTime } from "../utils/time";
 
-export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntry, onConvertToPause, suggestions = [] }) {
+export default function DayOverview({ gaps, totalHoursRaw, totalHoursRounded, dayEntries, onAddGapEntry, onConvertToPause, suggestions = [] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeGap, setActiveGap] = useState(null);
   const [description, setDescription] = useState("");
@@ -13,16 +14,27 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
   const { projects } = useContext(ProjectContext) || { projects: [] };
   const { customers } = useContext(CustomerContext);
 
-  const isIncomplete = totalHours < 8;
-  const remaining = 8 - totalHours;
 
-  const totalMinutes = Math.round(totalHours * 60);
-  const th = Math.floor(totalMinutes / 60);
-  const tm = totalMinutes % 60;
+  // Settings
+  const DAILY_GOAL_H = 8;
+  const settings = JSON.parse(localStorage.getItem("trackcycle.settings") || "{}");
+  const roundEnabled = settings.roundToQuarter === true;
 
-  const remainingMin = Math.max(0, Math.round(remaining * 60));
-  const rh = Math.floor(remainingMin / 60);
-  const rm = remainingMin % 60;
+  // Für "Arbeitstag unvollständig"
+  const isIncomplete = totalHoursRounded < DAILY_GOAL_H;
+
+  // Prozentwerte
+  const dailyPercentRaw = Math.min((totalHoursRaw / DAILY_GOAL_H) * 100, 100);
+  const dailyPercentRounded = Math.min((totalHoursRounded / DAILY_GOAL_H) * 100, 100);
+
+  // Anzeige in HH:MM
+  const rawTimeFormatted = formatTotalTime(totalHoursRaw);
+  const roundedTimeFormatted = formatTotalTime(totalHoursRounded);
+
+  // Restzeit abhängig von Einstellung
+  const baseHours = roundEnabled ? totalHoursRounded : totalHoursRaw;
+  const remainingMinutes = Math.max(0, DAILY_GOAL_H * 60 - baseHours * 60);
+  const remainingFormatted = formatTotalTime(remainingMinutes / 60);
 
   // 🟡 Nicht-buchbare Projekte prüfen
   const nonBillableProjects = ["SAL-001", "INTERN", "TEST"];
@@ -35,7 +47,7 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
     0
   );
 
-  const totalDayHours = totalHours || 0;
+  const totalDayHours = totalHoursRaw || 0;
   const nonBillableRatio = totalDayHours > 0 ? nonBillableHours / totalDayHours : 0;
 
   const showNonBillableWarning =
@@ -81,7 +93,9 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
         onClick={() => setIsOpen((v) => !v)}
         className="w-full flex justify-between items-center px-4 py-2 hover:bg-slate-700/40 transition-colors"
       >
-        <span className="text-xs font-medium text-slate-100 flex items-center gap-2">
+        <span className={`text-xs font-medium text-slate-100 flex items-center gap-2 transition-all ${
+            isOpen ? "py-2" : "py-0"
+          }`}>
           Tagesübersicht
         </span>
         <svg
@@ -112,7 +126,7 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
         {/* Fehlende Buchungen */}
         {gaps.length > 0 && (
           <>
-            <div className="font-medium text-indigo-400 mb-1">Fehlende Buchungen</div>
+            <div className="font-medium text-indigo-400 -mt-2 mb-2">Fehlende Buchungen</div>
             <div className="space-y-1 mb-3">
               {gaps.map((g, i) => (
                 <div
@@ -246,20 +260,46 @@ export default function DayOverview({ gaps, totalHours, dayEntries, onAddGapEntr
           </>
         )}
 
-        {/* Arbeitstag unvollständig */}
-        {isIncomplete && (
-          <div
-            className={`${
-              gaps.length > 0 ? "mt-3 border-t border-slate-700/50 pt-2" : ""
-            }`}
-          >
-            <div className="font-medium text-amber-400">Arbeitstag unvollständig</div>
-            <div className="text-sm text-slate-400">
-              Nur {th}:{tm.toString().padStart(2, "0")} h erfasst (
-              {rh}:{rm.toString().padStart(2, "0")} h fehlen bis 8 h)
-            </div>
+        {/* Tagesziel */}
+        <div className="mt-4">
+          <div className="font-medium mb-4">
+            Tagesziel: {DAILY_GOAL_H} h
           </div>
-        )}
+
+          {/* Fortschrittsbalken */}
+          <div className="w-full bg-slate-700/50 rounded-lg h-3 mb-2 relative overflow-hidden">
+            {/* Ungerundet */}
+            <div
+              className={`absolute top-0 left-0 h-3 rounded-lg bg-${settings?.accentColor || "indigo"}-500`}
+              style={{ width: `${dailyPercentRaw}%` }}
+            />
+            {/* Gerundet */}
+            <div
+              className={`absolute top-0 left-0 h-3 rounded-lg bg-${settings?.accentColor || "indigo"}-500/50`}
+              style={{ width: `${dailyPercentRounded}%` }}
+            />
+          </div>
+
+          {/* Legende */}
+          <div className="text-xs text-slate-500 mb-2 flex justify-between">
+            <span className="flex items-center">
+              <span className={`h-2 w-2 mr-1 bg-${settings?.accentColor || "indigo"}-500 rounded-full`} />
+              Ungerundet: {Math.round(dailyPercentRaw)} % ({rawTimeFormatted} h)
+            </span>
+            <span className="flex items-center">
+              <span className={`h-2 w-2 mr-1 bg-${settings?.accentColor || "indigo"}-500/50 rounded-full`} />
+              Gerundet: {Math.round(dailyPercentRounded)} % ({roundedTimeFormatted} h)
+            </span>
+          </div>
+
+          {remainingMinutes > 0 && (
+            <div className="text-sm text-slate-400 mt-1">
+              <div className="text-sm text-slate-400 mt-1">
+                Es fehlen noch {remainingFormatted} h bis {DAILY_GOAL_H} h 
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

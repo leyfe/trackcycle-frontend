@@ -4,6 +4,7 @@ import { Trash2, Edit, RotateCw, Download } from "lucide-react";
 import { useToast } from "./Toast";
 import DayOverview from "./DayOverview";
 import { exportEntriesConaktiv } from "../utils/exportData";
+import { formatTotalTime, calcDayHours } from "../utils/time";
 
 /* ----------------------------- EntryList ----------------------------- */
 export default function EntryList({
@@ -131,13 +132,6 @@ export default function EntryList({
     );
   };
 
-  const formatTotalTime = (decimalHours) => {
-    const totalSeconds = Math.round(decimalHours * 3600);
-    const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-    return `${h}:${m}`;
-  };
-
   const handleRestart = (entry) => {
     if (activeEntry) {
       showToast("Es läuft bereits ein Timer!", "OK", null, 5000, "warning");
@@ -170,25 +164,20 @@ export default function EntryList({
         const entriesForDay = groupedByDate[date];
         const dayLabel = isToday(date) ? "Heute" : date;
 
-        // 🔹 Arbeitszeit ohne Pausen
+
+        // 🔹 Pausen/Arbeitszeit
         const workingEntries = entriesForDay.filter((e) => !isPauseEntry(e));
         const pauseEntries = entriesForDay.filter(isPauseEntry);
 
-        // 🔹 Arbeitszeit-Summe
-        const roundedTasks = roundEnabled
-          ? getRoundedDurationsByTask(workingEntries)
-          : workingEntries.map((e) => {
-            const project = projById[e.projectId];
-            const projectName = project?.name || "";
-            return {
-              key: `${projectName}__${e.description || ""}`,
-              totalHours: parseFloat(e.duration || 0),
-            };
-          });
-        const dayRoundedTotal = roundedTasks.reduce(
-          (sum, t) => sum + t.totalHours,
-          0
-        );
+        // 🔹 Zentrale Berechnung (gleich wie in DayOverview)
+        // Immer beide Varianten berechnen
+        const {
+          rawHours: rawDayHours,
+          roundedHours: alwaysRoundedDayHours
+        } = calcDayHours(entriesForDay, true, projById);   // Immer aufgerundet berechnen
+
+        // Abhängig von Einstellung
+        const roundedDayHours = roundEnabled ? alwaysRoundedDayHours : rawDayHours;
 
         // 🔸 Pausensumme
         const pauseTotal = pauseEntries.reduce(
@@ -256,13 +245,14 @@ export default function EntryList({
               </div>
 
               <div className="mr-4 text-xs text-slate-400 flex items-center gap-2">
-                <span>{formatTotalTime(dayRoundedTotal)} h</span>
+                <span>{formatTotalTime(roundedDayHours)} h</span>                
               </div>
             </div>
 
             <DayOverview
               gaps={gaps}
-              totalHours={dayRoundedTotal}
+              totalHoursRaw={rawDayHours}
+              totalHoursRounded={alwaysRoundedDayHours}
               dayEntries={entriesForDay} 
               onAddGapEntry={(entry) => onAdd(entry)}
               onConvertToPause={onConvertToPause}
@@ -356,7 +346,7 @@ export default function EntryList({
                               isIconOnly
                               size="sm"
                               variant="flat"
-                              className="bg-slate-900/0 absolute opacity-0 group-hover:opacity-100 transition-all duration-200 -rotate-180 group-hover:rotate-0 hover:scale-110"
+                              className="bg-slate-900/0 absolute opacity-0 group-hover:opacity-100 transition-all duration-300 -rotate-180 group-hover:rotate-90 hover:scale-110"
                               onPress={() =>
                                 handleRestart(list[list.length - 1])
                               }

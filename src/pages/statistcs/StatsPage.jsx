@@ -137,6 +137,25 @@ export default function StatsPage({ entries = [], settings: incomingSettings, on
   const avgHours = totalDays ? (totalHours / totalDays).toFixed(2) : "0.00";
   const perfectDays = Object.values(dailyTotals).filter((m) => m / 60 >= 8).length;
 
+    // 🔹 Tagesziel
+    const dailyGoal = weeklyGoal / 5; // 5 Arbeitstage
+    const todayDate = new Date().toDateString();
+
+    const currentDayHoursRaw = entries
+      .filter((e) => new Date(e.start).toDateString() === todayDate && e.projectId !== "PAUSE")
+      .reduce((sum, e) => sum + (parseFloat(e.duration) || 0), 0);
+
+    const currentDayHoursRounded = entries
+      .filter((e) => new Date(e.start).toDateString() === todayDate && e.projectId !== "PAUSE")
+      .reduce((sum, e) => {
+        let dur = parseFloat(e.duration) || 0;
+        dur = Math.ceil(dur * 4) / 4;
+        return sum + dur;
+      }, 0);
+
+    const dailyPercentRaw = Math.min((currentDayHoursRaw / dailyGoal) * 100, 100);
+    const dailyPercentRounded = Math.min((currentDayHoursRounded / dailyGoal) * 100, 100);
+
   // 🔹 Wochenvergleich
   const calcTotalHours = (fromDays, toDays) => {
     const now = new Date();
@@ -326,6 +345,33 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
               : `📉 ${diffPercent.toFixed(1)} % weniger`}
           </div>
 
+          {/* Tagesziel */}
+          <div className="text-slate-400 text-sm mb-2">
+            Tagesziel: {dailyGoal.toFixed(1)} h
+          </div>
+
+          <div className="w-full bg-slate-800 rounded-lg h-3 mb-1 relative overflow-hidden">
+            <div
+              className={`absolute top-0 left-0 h-3 rounded-lg bg-${settings.accentColor}-500/50 transition-all`}
+              style={{ width: `${dailyPercentRounded}%` }}
+            />
+            <div
+              className={`absolute top-0 left-0 h-3 rounded-lg bg-${settings.accentColor}-500`}
+              style={{ width: `${dailyPercentRaw}%` }}
+            />
+          </div>
+
+          <div className="text-xs text-slate-500 mb-4 flex justify-between">
+            <span className="flex items-center">
+              <span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500 rounded-full`}></span>
+              {dailyPercentRaw.toFixed(0)} % ({currentDayHoursRaw.toFixed(1)} h)
+            </span>
+            <span className="flex items-center">
+              <span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500/50 rounded-full`}></span>
+              {dailyPercentRounded.toFixed(0)} % ({currentDayHoursRounded.toFixed(1)} h)
+            </span>
+          </div>
+
           {/* Wochenziel */}
           <div className="text-slate-400 text-sm mb-2">
             Wochenziel: {weeklyGoal} h
@@ -344,8 +390,8 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           </div>
 
           <div className="text-xs text-slate-500 mb-4 flex justify-between">
-            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500 rounded-full`}></span>Ungerundet: {weeklyPercentRaw.toFixed(0)} % ({currentWeekHoursRaw.toFixed(1)} h)</span>
-            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500/50 rounded-full`}></span>Gerundet: {weeklyPercentRounded.toFixed(0)} % ({currentWeekHoursRounded.toFixed(1)} h)</span>
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500 rounded-full`}></span>{weeklyPercentRaw.toFixed(0)} % ({currentWeekHoursRaw.toFixed(1)} h)</span>
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500/50 rounded-full`}></span>{weeklyPercentRounded.toFixed(0)} % ({currentWeekHoursRounded.toFixed(1)} h)</span>
           </div>
 
           {/* Monatsziel */}
@@ -363,9 +409,15 @@ Dein Fokus-Score liegt bei ${focusScore}% 🧠.
           </div>
 
           <div className="text-xs text-slate-500 mb-4 flex justify-between">
-            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500 rounded-full`}></span>Ungerundet: {goalPercentRaw.toFixed(0)} % ({currentMonthHoursRaw.toFixed(1)} h)</span>
-            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500/50 rounded-full`}></span>Gerundet: {goalPercentRounded.toFixed(0)} % ({currentMonthHoursRounded.toFixed(1)} h)</span>
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500 rounded-full`}></span>{goalPercentRaw.toFixed(0)} % ({currentMonthHoursRaw.toFixed(1)} h)</span>
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500/50 rounded-full`}></span>{goalPercentRounded.toFixed(0)} % ({currentMonthHoursRounded.toFixed(1)} h)</span>
           </div>
+
+          <div className="text-xs text-slate-500 flex justify-start">
+            <span className="flex items-center mr-2"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500 rounded-full`}></span>Ungerundet</span>
+            <span className="flex items-center"><span className={`h-2 w-2 mr-1 bg-${settings.accentColor}-500/50 rounded-full`}></span>Gerundet</span>
+          </div>
+          
         </CardBody>
       </Card>
 

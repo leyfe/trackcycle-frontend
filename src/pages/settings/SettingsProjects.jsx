@@ -48,9 +48,9 @@ export default function SettingsProjects({ onBack, settings }) {
     onBack?.();
   };
 
-  const handleSaveProject = (projectId) => {
+  const handleSaveProject = (tempKey) => {
     saveToLocalStorage(projects);
-    setExpandedProjects((prev) => prev.filter((id) => id !== projectId));
+    setExpandedProjects((prev) => prev.filter((id) => id !== tempKey));
   };
 
   const handleAddProject = () => {
@@ -68,12 +68,12 @@ export default function SettingsProjects({ onBack, settings }) {
     setExpandedProjects((prev) => [...prev, newProject.tempKey]);
   };
 
-  const handleDeleteProject = (id) => {
+  const handleDeleteProject = (tempKey) => {
     const confirmDelete = window.confirm("Möchtest du dieses Projekt wirklich löschen?");
     if (!confirmDelete) return;
-    const updated = projects.filter((p) => p.id !== id);
+    const updated = projects.filter((p) => p.tempKey !== tempKey);
     setProjects(updated);
-    setExpandedProjects((prev) => prev.filter((pid) => pid !== id));
+    setExpandedProjects((prev) => prev.filter((id) => id !== tempKey));
     saveToLocalStorage(updated);
   };
 
@@ -152,12 +152,13 @@ export default function SettingsProjects({ onBack, settings }) {
             const expanded = expandedProjects.includes(p.tempKey);
             const customerName =
               customers.find((c) => c.id === p.customerId)?.name || "Kein Kunde";
+            const isEnded = p.endDate && new Date(p.endDate) < new Date();
 
             return (
               <Card
                 key={p.tempKey}
                 className={`${
-                  p.endDate
+                  isEnded
                     ? "bg-slate-800/60 border-slate-700 opacity-70"
                     : "bg-slate-900/70 border-slate-700"
                 } shadow-lg overflow-hidden transition-all mb-3`}
@@ -184,7 +185,7 @@ export default function SettingsProjects({ onBack, settings }) {
                       color="default"
                       onPress={(e) => {
                         e.stopPropagation();
-                        toggleExpand(p.id);
+                        toggleExpand(p.tempKey);
                       }}
                     >
                       {expanded ? (
@@ -294,7 +295,7 @@ export default function SettingsProjects({ onBack, settings }) {
 
                       {/* 🔹 Buttons für Beenden / Reaktivieren */}
                       <div className="flex gap-2 mt-2">
-                        {!p.endDate ? (
+                        {!isEnded ? (
                           <Button
                             size="sm"
                             color="danger"
@@ -430,7 +431,7 @@ export default function SettingsProjects({ onBack, settings }) {
                         <Button
                           size="sm"
                           className={`bg-${settings?.accentColor || "indigo"}-600 hover:bg-${settings?.accentColor || "indigo"}-500 text-white`}
-                          onPress={() => handleSaveProject(p.id)}
+                          onPress={() => handleSaveProject(p.tempKey)}
                         >
                           <Save className="w-4 h-4 mr-1" /> Speichern
                         </Button>
@@ -438,7 +439,7 @@ export default function SettingsProjects({ onBack, settings }) {
                           color="danger"
                           size="sm"
                           variant="flat"
-                          onPress={() => handleDeleteProject(p.id)}
+                          onPress={() => handleDeleteProject(p.tempKey)}
                         >
                           <Trash2 className="w-4 h-4 mr-1" /> Löschen
                         </Button>
