@@ -1,5 +1,6 @@
 import React, { useState, useContext, useRef } from "react";
-import { Button, Autocomplete, AutocompleteItem, AutocompleteSection, Input, Select, SelectItem, Card, CardBody } from "@nextui-org/react";
+import { Button, Autocomplete, AutocompleteItem, AutocompleteSection, Tooltip, Card, CardBody } from "@nextui-org/react";
+import { SquarePause } from "lucide-react";
 import { ProjectContext } from "../context/ProjectContext"; // falls du den Context nutzt
 import { CustomerContext } from "../context/CustomerContext";
 import { formatTotalTime } from "../utils/time";
@@ -126,29 +127,32 @@ export default function DayOverview({ gaps, totalHoursRaw, totalHoursRounded, da
         {/* Fehlende Buchungen */}
         {gaps.length > 0 && (
           <>
-            <div className="font-medium text-indigo-400 -mt-2 mb-2">Fehlende Buchungen</div>
-            <div className="space-y-1 mb-3">
+            <div className={`font-medium text-${settings?.accentColor || "indigo"}-400 -mt-2 mb-2`}>Fehlende Buchungen</div>
+            <div className=" mb-3">
               {gaps.map((g, i) => (
                 <div
                   key={i}
                   onClick={() => setActiveGap(g)}
-                  className={`flex items-center w-[calc(100%_+_1rem)] px-[0.5rem] -ml-[0.5rem] justify-between border-b border-slate-700/50 last:border-0 pb-1 cursor-pointer hover:bg-slate-700/30 rounded ${
-                    activeGap === g ? "bg-slate-700/50" : ""
+                  className={`flex rounded-lg items-center w-[calc(100%_+_1rem)] py-2.5 px-[1rem] -ml-[0.5rem] mt-1 justify-between cursor-pointer hover:bg-slate-700/50 items-center ${
+                    activeGap === g ? "bg-slate-700" : "bg-slate-900/50"
                   }`}
                 >
                   <span className="flex-1">
                     {g.from.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} –{" "}
                     {g.to.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
-                  <Button
+                  <Tooltip color="foreground" content="Als Pause deklarieren?">                  
+                    <a
+                    isIconOnly
+                    variant="flat"
                     size="sm"
-                    variant="text"
-                    onPress={() => onConvertToPause(g)}
-                  >
-                    Als Pause deklarieren
-                  </Button>
+                    className={`h-5 w-5 transition-opacity opacity-50 hover:opacity-100 text-${settings?.accentColor || "indigo"}-600 bg-slate-500/0 mr-2`}
+                    onClick={() => onConvertToPause(g)}
+                    >
+                      <SquarePause className={`h-5 w-5`}></SquarePause>
+                    </a>
+                  </Tooltip>
                   <span className="text-slate-400">({g.text})</span>
-
                 </div>
               ))}
             </div>
