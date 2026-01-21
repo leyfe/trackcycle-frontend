@@ -1,6 +1,6 @@
 const entries = [
   {
-    "date": "6.11.2025",
+    "date": "x",
     "hours": "0,00",
     "customer": "x",
     "project": "x",
@@ -73,7 +73,7 @@ async function fillEntry(entry, index) {
   console.log(`➡️ [${index + 1}] Buche:`, entry);
 
   // ➕ Neues Formular öffnen
-  const newBtn = document.querySelector('a[au-target-id="1013"]');
+  const newBtn = document.querySelector('a[au-target-id="1015"]');
   if (!newBtn) {
     console.warn("❌ '+'-Button nicht gefunden!");
     return;

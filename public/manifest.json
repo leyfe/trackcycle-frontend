@@ -5,7 +5,7 @@
   "scope": "/track/",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#6366f1",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "/track/favico.png",
