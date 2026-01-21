@@ -28,8 +28,20 @@ export default function TimeEntryForm({
   selectedFavorite,
 }) {
   const { projects } = useContext(ProjectContext);
-  const visibleProjects = projects.filter(p => !p.hidden);
   const { customers } = useContext(CustomerContext);
+
+  const now = new Date();
+
+  const visibleProjects = projects.filter((p) => {
+    if (p.hidden) return false;
+
+    if (!p.endDate) return true;
+
+    const end = new Date(p.endDate);
+    if (Number.isNaN(end.getTime())) return true;
+
+    return end >= now;
+  });
 
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedProjectId, setSelectedProjectId] = useState("");
@@ -316,6 +328,13 @@ export default function TimeEntryForm({
           >
             {suggestions
               ?.filter((s) => {
+                // ⛔ Projekt existiert nicht mehr oder ist abgelaufen
+                const projectExists = visibleProjects.some(
+                  (p) => p.id === s.projectId
+                );
+                if (!projectExists) return false;
+
+                // 🕒 bestehende Logik: nur letzte 31 Tage
                 if (!s.lastUsed) return true;
                 const lastUsedDate = new Date(s.lastUsed);
                 const daysSince = (Date.now() - lastUsedDate) / (1000 * 60 * 60 * 24);

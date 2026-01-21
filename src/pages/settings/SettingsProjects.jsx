@@ -5,6 +5,7 @@ import {
   Card,
   CardBody,
   Select,
+  Switch,
   SelectItem
 } from "@nextui-org/react";
 import {
@@ -19,12 +20,41 @@ import PageHeader from "../../components/PageHeader";
 import { safeUUID } from "../../utils/uuid";
 import ActivityModal from "../../components/modals/ActivityModal";
 
+const TRACK_SELECTED = {
+    indigo:
+        "group-data-[selected=true]:!bg-indigo-600 group-data-[selected=true]:hover:!bg-indigo-500",
+    emerald:
+        "group-data-[selected=true]:!bg-emerald-600 group-data-[selected=true]:hover:!bg-emerald-500",
+    violet:
+        "group-data-[selected=true]:!bg-violet-600 group-data-[selected=true]:hover:!bg-violet-500",
+    rose:
+        "group-data-[selected=true]:!bg-rose-600 group-data-[selected=true]:hover:!bg-rose-500",
+    orange:
+        "group-data-[selected=true]:!bg-orange-600 group-data-[selected=true]:hover:!bg-orange-500",
+    yellow:
+        "group-data-[selected=true]:!bg-yellow-500 group-data-[selected=true]:hover:!bg-yellow-400",
+    lime:
+        "group-data-[selected=true]:!bg-lime-600 group-data-[selected=true]:hover:!bg-lime-500",
+    sky:
+        "group-data-[selected=true]:!bg-sky-600 group-data-[selected=true]:hover:!bg-sky-500",
+    purple:
+        "group-data-[selected=true]:!bg-purple-600 group-data-[selected=true]:hover:!bg-purple-500",
+    fuchsia:
+        "group-data-[selected=true]:!bg-fuchsia-600 group-data-[selected=true]:hover:!bg-fuchsia-500",
+    slate:
+        "group-data-[selected=true]:!bg-slate-600 group-data-[selected=true]:hover:!bg-slate-500",
+};
+
 export default function SettingsProjects({ onBack, settings }) {
   const [projects, setProjects] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [expandedProjects, setExpandedProjects] = useState([]);
+
+  const [hideExpiredProjects, setHideExpiredProjects] = useState(
+    Boolean(settings?.hideExpiredProjects)
+  );
 
   useEffect(() => {
     const storedProjects = JSON.parse(localStorage.getItem("trackcycle.projects") || "[]");
@@ -46,6 +76,18 @@ export default function SettingsProjects({ onBack, settings }) {
     const cleanProjects = projects.map(({ tempKey, ...rest }) => rest);
     localStorage.setItem("trackcycle.projects", JSON.stringify(cleanProjects));
     onBack?.();
+  };
+
+  const persistSettings = (next) => {
+    localStorage.setItem("trackcycle.settings", JSON.stringify(next));
+  };
+
+  const handleToggleHideExpired = (val) => {
+    setHideExpiredProjects(val);
+
+    const stored = JSON.parse(localStorage.getItem("trackcycle.settings") || "{}");
+    const next = { ...stored, hideExpiredProjects: val };
+    persistSettings(next);
   };
 
   const handleSaveProject = (tempKey) => {
@@ -125,11 +167,25 @@ export default function SettingsProjects({ onBack, settings }) {
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((cust) => ({
       customer: cust.name,
-      projects: projects.filter((p) => p.customerId === cust.id),
+      projects: projects.filter((p) => {
+        if (p.customerId !== cust.id) return false;
+
+        if (!hideExpiredProjects) return true;
+
+        const isEnded = p.endDate && new Date(p.endDate) < new Date();
+        return !isEnded;
+      }),
     }));
 
   // 🔹 Projekte ohne Kunde
-  const unassigned = projects.filter((p) => !p.customerId);
+  const unassigned = projects.filter((p) => {
+    if (p.customerId) return false;
+
+    if (!hideExpiredProjects) return true;
+
+    const isEnded = p.endDate && new Date(p.endDate) < new Date();
+    return !isEnded;
+  });
   if (unassigned.length > 0) {
     groupedProjects.push({ customer: "— Ohne Kunden —", projects: unassigned });
   }
@@ -137,6 +193,31 @@ export default function SettingsProjects({ onBack, settings }) {
   return (
     <div className="space-y-6 mt-6">
       <PageHeader title="Projekte verwalten" onBack={onBack} />
+
+  <div className="flex items-center justify-between bg-slate-900/60 border border-slate-700 rounded-2xl px-4 py-3">
+    <div>
+      <div className="text-slate-200 font-medium">Beendete Projekte ausblenden</div>
+      <div className="text-xs text-slate-500">
+        Beendete Projekte werden in Listen nicht mehr angezeigt.
+      </div>
+    </div>
+
+    <Switch
+        size="sm"
+        color="default"
+        isSelected={hideExpiredProjects}
+        classNames={{
+            wrapper: `
+                bg-slate-600
+                ${TRACK_SELECTED[settings.accentColor || "indigo"]}
+                `,
+            thumb: "bg-white shadow-md",
+            base: "bg-transparent",
+        }}
+        onValueChange={handleToggleHideExpired}
+    />
+
+  </div>
 
       {groupedProjects.map((group) => (
         <div key={group.customer}>
