@@ -84,24 +84,6 @@ async function fillEntry(entry, index) {
   await wait(2000);
   console.log("🆕 Formular bereit");
 
-  // 📁 Projekt
-  const projectField = document.querySelector('input[placeholder="Projekt"]');
-  if (projectField) {
-    console.log("📁 Projekt:", entry.project);
-    await typeLikeHuman(projectField, entry.project);
-    await waitForDomStable();
-    await wait(2500);
-  }
-
-  // 💼 Tätigkeit
-  const activityField = document.querySelector('input[placeholder="Position"]');
-  if (activityField) {
-    console.log("💼 Tätigkeit:", entry.activity);
-    await typeLikeHuman(activityField, entry.activity);
-    await waitForDomStable();
-    await wait(2500);
-  }
-
   // 🗓️ Datum
   const dateField = document.querySelector('input[name*="KA_Endetag"]');
   if (dateField) {
@@ -119,6 +101,24 @@ async function fillEntry(entry, index) {
   }
 
   await wait(800);
+
+  // 📁 Projekt
+  const projectField = document.querySelector('input[placeholder="Projekt"]');
+  if (projectField) {
+    console.log("📁 Projekt:", entry.project);
+    await typeLikeHuman(projectField, entry.project);
+    await waitForDomStable();
+    await wait(2500);
+  }
+
+  // 💼 Tätigkeit
+  const activityField = document.querySelector('input[placeholder="Position"]');
+  if (activityField) {
+    console.log("💼 Tätigkeit:", entry.activity);
+    await typeLikeHuman(activityField, entry.activity);
+    await waitForDomStable();
+    await wait(2500);
+  }
 
   // 📝 Beschreibung
   const descField = document.querySelector('textarea[name*="KA_Beschreibung"]');
